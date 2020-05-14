@@ -16,6 +16,7 @@ class Network:
         self.client.connect(self.addr)
         return self.client.recv(2048).decode()
 
+
     def send(self, data):
         """
         :param data: str

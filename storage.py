@@ -139,12 +139,19 @@ class banana(object):
         self.player2words = {}
         self.player2words_list = []
 
-
+    """
     def send_data(self):
         data = str(self.net.id) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update)
         reply = self.net.send(data)
         return reply
+    """
+    def send_data(self):
+        data = str(self.net.id) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update)
+        self.net.send(data)
+        return None
 
+    def recv_data(self):
+        return self.net.recv()
 
     @staticmethod
     def parse_data(data):
@@ -336,67 +343,65 @@ class banana(object):
 
         # if could not take the other player's words, check if can take one's own
         if not is_taken:
-            self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, merriam_candidate, self.playerwords, False)
+            is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, merriam_candidate, self.playerwords, False)
 
-            if self_is_taken:
-                self.last_update = datetime.datetime.now()
-                self.updated = True
-                if event_type == 'steal':
-                    candidate_list = list(candidate)
+        if is_taken:
+            self.last_update = datetime.datetime.now()
+            self.updated = True
+            if event_type == 'steal':
+                candidate_list = list(candidate)
 
-                    del self.playerwords[taken_word]
-                    self.playerwords.update({candidate: merriam_candidate})
+                del self.playerwords[taken_word]
+                self.playerwords.update({candidate: merriam_candidate})
 
-                    self.playerwords_list[taken_i] = candidate
+                self.playerwords_list[taken_i] = candidate
 
-                    for letter in taken_word:
-                        candidate_list.remove(letter)
-                    for letter in candidate_list:
-                        self.current.remove(letter)
-                    self.previous_guess = self.guess
-                    self.status = "Success! " + f"({self.previous_guess})"
-                    self.fresh_take = True
-                    self.pre_take_word = taken_word
-                    self.middle_used = candidate_list
+                for letter in taken_word:
+                    candidate_list.remove(letter)
+                for letter in candidate_list:
+                    self.current.remove(letter)
+                self.previous_guess = self.guess
+                self.status = "Success! " + f"({self.previous_guess})"
+                self.fresh_take = True
+                self.pre_take_word = taken_word
+                self.middle_used = candidate_list
 
-                elif event_type == 'middle':
-                    candidate_list = list(candidate)
+            elif event_type == 'middle':
+                candidate_list = list(candidate)
 
-                    for letter in candidate_list:
-                        self.current.remove(letter)
-                    self.playerwords.update({candidate: merriam_candidate})
-                    self.playerwords_list.append(candidate)
+                for letter in candidate_list:
+                    self.current.remove(letter)
+                self.playerwords.update({candidate: merriam_candidate})
+                self.playerwords_list.append(candidate)
 
-                    self.previous_guess = self.guess
-                    self.status = "Success! " + f"({self.previous_guess})"
-                    self.fresh_take = True
-                    self.pre_take_word = taken_word
-                    self.middle_used = candidate_list
+                self.previous_guess = self.guess
+                self.status = "Success! " + f"({self.previous_guess})"
+                self.fresh_take = True
+                self.pre_take_word = taken_word
+                self.middle_used = candidate_list
 
 
 
-                elif error_trivial_extension:
-                    self.previous_guess = self.guess
-                    self.status = "Same root! " + f"({self.previous_guess})"
-                elif error_tiles:
-                    self.previous_guess = self.guess
-                    self.status = "Tiles aren't there! " + f"({self.previous_guess})"
-                else:
-                    self.previous_guess = self.guess
-                    self.status = "Tiles aren't there! " + f"({self.previous_guess})"
+        elif error_trivial_extension:
+            self.previous_guess = self.guess
+            self.status = "Same root! " + f"({self.previous_guess})"
+        elif error_tiles:
+            self.previous_guess = self.guess
+            self.status = "Tiles aren't there! " + f"({self.previous_guess})"
+        else:
+            self.previous_guess = self.guess
+            self.status = "Tiles aren't there! " + f"({self.previous_guess})"
         self.guess = ''
 
     def printstatus(self):
 
         # Send network stuff, outputs of this function are the stuff you receive from the other player
-        self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
+        self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.recv_data())
 
         # If it's a fresh take, check to see if the opponent's taken it first
-        """
         if self.fresh_take:
             # Check if center tiles and taken word are still there:
             if not self.__superset(self.player2current, self.middle_used, strict=False) or (not self.pre_take_word in player2words_list_recv and not self.pre_take_word in playerwords_list_recv):
-                print("OVERWRITING!!!!")
                 self.current = self.player2current
                 self.playerwords = playerwords_recv
                 self.playerwords_list = playerwords_list_recv
@@ -405,7 +410,9 @@ class banana(object):
                 self.player2words_list = player2words_list_recv
         # Reset self.fresh_take
         self.fresh_take = False
-        """
+
+        # After checking, now can send own data
+        self.send_data()
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
         if self.player2_last_update > self.last_update:
@@ -570,3 +577,25 @@ def main():
 if __name__ == "__main__":
     # execute only if run as a script
     main()
+
+----------------
+Network
+
+
+def send(self, data):
+    """
+    :param data: str
+    :return: str
+    """
+    try:
+        self.client.send(str.encode(data))
+        return None
+    except socket.error as e:
+        return str(e)
+
+def recv(self):
+    try:
+        reply = self.client.recv(2048).decode()
+        return reply
+    except socket.error as e:
+        return str(e)

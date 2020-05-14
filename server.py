@@ -3,6 +3,8 @@ from _thread import *
 import sys
 import datetime
 
+print_check = True
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server = '192.168.1.8'
@@ -40,13 +42,15 @@ def threaded_client(conn):
                 id = int(arr[0])
                 data_all[id] = reply
 
-                print(f"{conn.getsockname()[0]}: Current ID: {currentId}, ID: {id}" + "Received: " + reply)
+                if print_check:
+                    print(f"{conn.getsockname()[0]}: Current ID: {currentId}, ID: {id}" + "Received: " + reply)
 
                 if id == 0: nid = 1
                 if id == 1: nid = 0
 
                 reply = data_all[nid][:]
-                print(f"{conn.getsockname()[0]}: Current ID: {currentId}, ID: {id}" + "Sending: " + reply)
+                if print_check:
+                    print(f"{conn.getsockname()[0]}: Current ID: {currentId}, ID: {id}" + "Sending: " + reply)
 
             conn.sendall(str.encode(reply))
         except:

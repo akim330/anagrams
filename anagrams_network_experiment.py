@@ -209,6 +209,43 @@ class banana(object):
         textRectObj.topleft = (x, y)
         DISPLAYSURF.blit(textSurfaceObj, textRectObj)
 
+    def __update_board(self, event_type, candidate, merriam_candidate, taken_word, taken_i):
+        if event_type == 'opponent steal':
+            # Make the candidate word into a list to remove individual letters.
+
+
+            # Delete the taken word from opponent's list, add it to your own dictionary and corresponding list (list for ordering purposes)
+            del self.player2words[taken_word]
+            self.player2words_list.remove(taken_word)
+
+            self.playerwords.update({candidate: merriam_candidate})
+            self.playerwords_list.append(candidate)
+
+            # Figure out what tiles are used from the middle and remove those from self.current
+
+
+            for letter in self.middle_used:
+                self.current.remove(letter)
+
+            self.status = "Success! " + f"({self.previous_guess})"
+
+        elif event_type == 'self steal':
+            del self.playerwords[taken_word]
+            self.playerwords.update({candidate: merriam_candidate})
+
+            self.playerwords_list[taken_i] = candidate
+
+            for letter in self.middle_used:
+                self.current.remove(letter)
+
+            self.status = "Success! " + f"({self.previous_guess})"
+        elif event_type == 'middle':
+            for letter in self.middle_used:
+                self.current.remove(letter)
+            self.playerwords.update({candidate: self.merriam_candidate})
+            self.playerwords_list.append(candidate)
+
+            self.status = "Success! " + f"({self.previous_guess})"
 
     def __check_steal(self, candidate, merriam_candidate, word_dict, is_opponent):
         # Check whether a steal happens
@@ -250,7 +287,10 @@ class banana(object):
                     elif root_overlap or (merriam_candidate == merriam_word):
                         event_type = 'trivial'
                     else:
-                        event_type = 'steal'
+                        if is_opponent:
+                            event_type = 'opponent steal'
+                        else:
+                            event_type = 'self steal'
                         taken_word = word
                         taken_i = i
                         return True, event_type, taken_word, taken_i
@@ -267,7 +307,6 @@ class banana(object):
                      # error_trivial_extension = True
 
                 # If all of those check out, then it's a steal and record which word is being stolen
-
 
     def take(self, candidate):
 
@@ -294,96 +333,74 @@ class banana(object):
         error_tiles = False
 
         # Get the merriam stripped version of the guess (e.g. TRAINED --> TRAIN)
-        merriam_candidate = root.merriam_strip(candidate)
+        self.merriam_candidate = root.merriam_strip(candidate)
 
         # Check if can take the other player's words (not checking middle steal)
-        is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, merriam_candidate, self.player2words, True)
+        is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, self.merriam_candidate, self.player2words, True)
+        self.event_type = event_type
 
         if is_taken:
             # Get time of this steal
             self.last_update = datetime.datetime.now()
 
-            if event_type == 'steal': # in theory, this if statement is unnecessary since there are no middle steals
-                # Make the candidate word into a list to remove individual letters.
+            if self.event_type == 'opponent steal': # in theory, this if statement is unnecessary since there are no middle steals
+                # Get what letters were used in the middle
                 candidate_list = list(candidate)
-
-                # Delete the taken word from opponent's list, add it to your own dictionary and corresponding list (list for ordering purposes)
-                del self.player2words[taken_word]
-                self.player2words_list.remove(taken_word)
-
-                self.playerwords.update({candidate: merriam_candidate})
-                self.playerwords_list.append(candidate)
-
-                # Figure out what tiles are used from the middle and remove those from self.current
                 for letter in taken_word:
                     candidate_list.remove(letter)
+                self.middle_used = candidate_list
 
-                for letter in candidate_list:
-                    self.current.remove(letter)
-                self.previous_guess = self.guess
-                self.status = "Success! " + f"({self.previous_guess})"
                 self.fresh_take = True
                 self.pre_take_word = taken_word
-                self.middle_used = candidate_list
+                self.taken_i = taken_i
 
         else:
             # If no steal was triggered above, then couldn't steal opponent's words for one of the reasons below
             # (wait until you check whether you can take one of your own words to see if it was a failure overall)
-            if event_type == 'trivial':
+            if self.event_type == 'trivial':
                 error_trivial_extension = True
-            elif event_type == 'tiles':
+            elif self.event_type == 'tiles':
                 error_tiles = True
 
         # if could not take the other player's words, check if can take one's own
         if not is_taken:
-            self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, merriam_candidate, self.playerwords, False)
+            self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, self.merriam_candidate, self.playerwords, False)
+            self.event_type = event_type
 
             if self_is_taken:
                 self.last_update = datetime.datetime.now()
                 self.updated = True
-                if event_type == 'steal':
+                if self.event_type == 'self steal':
                     candidate_list = list(candidate)
-
-                    del self.playerwords[taken_word]
-                    self.playerwords.update({candidate: merriam_candidate})
-
-                    self.playerwords_list[taken_i] = candidate
-
                     for letter in taken_word:
                         candidate_list.remove(letter)
-                    for letter in candidate_list:
-                        self.current.remove(letter)
-                    self.previous_guess = self.guess
-                    self.status = "Success! " + f"({self.previous_guess})"
-                    self.fresh_take = True
-                    self.pre_take_word = taken_word
                     self.middle_used = candidate_list
 
-                elif event_type == 'middle':
+                    self.fresh_take = True
+                    self.pre_take_word = taken_word
+                    self.taken_i = taken_i
+
+
+                elif self.event_type == 'middle':
                     candidate_list = list(candidate)
-
-                    for letter in candidate_list:
-                        self.current.remove(letter)
-                    self.playerwords.update({candidate: merriam_candidate})
-                    self.playerwords_list.append(candidate)
-
-                    self.previous_guess = self.guess
-                    self.status = "Success! " + f"({self.previous_guess})"
-                    self.fresh_take = True
-                    self.pre_take_word = taken_word
                     self.middle_used = candidate_list
 
+                    self.fresh_take = True
+                    self.pre_take_word = taken_word
+                    self.taken_i = taken_i
 
 
-                elif error_trivial_extension:
-                    self.previous_guess = self.guess
-                    self.status = "Same root! " + f"({self.previous_guess})"
-                elif error_tiles:
-                    self.previous_guess = self.guess
-                    self.status = "Tiles aren't there! " + f"({self.previous_guess})"
-                else:
-                    self.previous_guess = self.guess
-                    self.status = "Tiles aren't there! " + f"({self.previous_guess})"
+
+            elif error_trivial_extension:
+                self.previous_guess = self.guess
+                self.status = "Same root! " + f"({self.previous_guess})"
+            elif error_tiles:
+                self.previous_guess = self.guess
+                self.status = "Tiles aren't there! " + f"({self.previous_guess})"
+            else:
+                self.previous_guess = self.guess
+                self.status = "Tiles aren't there! " + f"({self.previous_guess})"
+        self.previous_guess = self.guess
         self.guess = ''
 
     def printstatus(self):
@@ -392,20 +409,25 @@ class banana(object):
         self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
 
         # If it's a fresh take, check to see if the opponent's taken it first
-        """
         if self.fresh_take:
-            # Check if center tiles and taken word are still there:
-            if not self.__superset(self.player2current, self.middle_used, strict=False) or (not self.pre_take_word in player2words_list_recv and not self.pre_take_word in playerwords_list_recv):
-                print("OVERWRITING!!!!")
+            # Check if center tiles and taken word are still there. If not, then adopt other player's board
+            if playerwords_recv and (not self.__superset(self.player2current, self.middle_used, strict=False) or (self.event_type != 'middle' and not self.pre_take_word in player2words_list_recv and not self.pre_take_word in playerwords_list_recv)):
+                print("UPDATING!!!")
                 self.current = self.player2current
                 self.playerwords = playerwords_recv
                 self.playerwords_list = playerwords_list_recv
                 self.last_update = self.player2_last_update
                 self.player2words = player2words_recv
                 self.player2words_list = player2words_list_recv
-        # Reset self.fresh_take
-        self.fresh_take = False
-        """
+            else: # Legitimate steal, then update the board accordingly
+                print("UPDATING BOARD")
+                self.__update_board(self.event_type, self.previous_guess, self.merriam_candidate, self.pre_take_word, self.taken_i)
+            # Reset self.fresh_take
+            self.fresh_take = False
+
+
+
+
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
         if self.player2_last_update > self.last_update:
