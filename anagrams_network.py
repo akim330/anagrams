@@ -11,6 +11,8 @@ import datetime
 import pygame, sys
 from pygame.locals import *
 
+print_check = True
+
 FPS = 30
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 640
@@ -409,6 +411,10 @@ class banana(object):
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
         if self.player2_last_update > self.last_update:
+            if print_check:
+                print("UPDATING")
+                print(f"Old Words: {self.playerwords}")
+                print(f"New Words: {playerwords_recv}")
             self.current = self.player2current
             self.playerwords = playerwords_recv
             self.playerwords_list = playerwords_list_recv
