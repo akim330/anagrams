@@ -172,8 +172,15 @@ class banana(object):
 
 
     def send_data(self):
+        if time_check:
+            start_time = time.time()
         data = str(self.net.id) + "|" + str(self.tiles) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update)
         reply = self.net.send(data)
+
+        if time_check:
+            end_time = time.time()
+            self.time_dict['send_data'] = end_time - start_time
+
         return reply
 
 
@@ -464,9 +471,6 @@ class banana(object):
 
     def printstatus(self):
 
-        if time_check:
-            start_time = time.time()
-
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
 
@@ -509,10 +513,6 @@ class banana(object):
             self.player2words_list = player2words_list_recv
 
             self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
-
-        if time_check:
-            end_time = time.time()
-            self.time_dict['send_data'] = end_time - start_time
 
 
         self.__update_graphics()
