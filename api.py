@@ -26,7 +26,7 @@ def get_etym(word):
             etym_list_split = etym_list_split + string.split(', ')
         return etym_list_split
 
-    except TypeError:
+    except (TypeError, KeyError):
         return None
 
 
