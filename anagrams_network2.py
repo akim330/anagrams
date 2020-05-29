@@ -617,6 +617,8 @@ def main():
     game = banana()
 
     while True: # main game loop
+        start_loop = time.time()
+
         DISPLAYSURF.fill(BGCOLOR)
 
         for event in pygame.event.get():
@@ -653,6 +655,9 @@ def main():
         game.printstatus()
 
         pygame.display.update()
+
+        end_loop = time.time()
+        print(f"Time taken for current loop: {end_loop - start_loop}") 
 
 
 if __name__ == "__main__":
