@@ -168,7 +168,7 @@ class banana(object):
         self.y_gap_opp_words = y_gap_opp_words
 
         self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
-                          'display_graphics': 0}
+                          'display_graphics': 0, 'send_parse': 0, 'update_players': 0}
 
 
     def send_data(self):
@@ -186,6 +186,7 @@ class banana(object):
 
     @staticmethod
     def parse_data(data):
+
         try:
             split = data.split('|')
             tiles = ast.literal_eval(split[1])
@@ -195,6 +196,7 @@ class banana(object):
             playerwords = ast.literal_eval(split[5])
             playerwords_list = ast.literal_eval(split[6])
             last_update = datetime.datetime.strptime(split[7], '%Y-%m-%d %H:%M:%S.%f')
+
             return tiles, current, player2words, player2words_list, playerwords, playerwords_list, last_update
         except:
             return [], None, {}, [], None, None, datetime.datetime(1,1,1,0,0)
@@ -471,8 +473,16 @@ class banana(object):
 
     def printstatus(self):
 
+        if time_check:
+            start_time = time.time()
+
+
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
+
+        if time_check:
+            end_time = time.time()
+            self.time_dict['send_parse'] = end_time - start_time
 
         # If just initialized and other player has tiles, make them your own tiles
         if self.new_initialization:
@@ -499,6 +509,9 @@ class banana(object):
         self.fresh_take = False
         """
 
+        if time_check:
+            start_time = time.time()
+
         # Check if other player has made a more recent update, meaning you would need to update your lists
         if self.player2_last_update > self.last_update:
             if print_check:
@@ -514,6 +527,9 @@ class banana(object):
 
             self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
 
+        if time_check:
+            end_time = time.time()
+            self.time_dict['update_players'] = end_time - start_time
 
         self.__update_graphics()
 
