@@ -13,6 +13,7 @@ import pygame, sys
 from pygame.locals import *
 
 print_check = True
+time_check = True
 
 FPS = 30
 WINDOWWIDTH = 640
@@ -166,6 +167,9 @@ class banana(object):
         self.y_gap_words = y_gap_words
         self.y_gap_opp_words = y_gap_opp_words
 
+        self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
+                          'display_graphics': 0}
+
 
     def send_data(self):
         data = str(self.net.id) + "|" + str(self.tiles) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update)
@@ -283,6 +287,8 @@ class banana(object):
 
 
     def take(self, candidate):
+        if time_check:
+            start_time = time.time()
 
         # First check if has 3 letters
         if len(candidate) < 3:
@@ -408,8 +414,14 @@ class banana(object):
                 self.status = "Tiles aren't there! " + f"({self.previous_guess})"
                 self.graphics_to_update = self.graphics_to_update + ['status', 'guess']
         self.guess = ''
+        if time_check:
+            end_time = time.time()
+            self.time_dict['take'] = end_time - start_time
 
     def __update_graphics(self):
+        if time_check:
+            start_time = time.time()
+
         if 'tiles' in self.graphics_to_update:
             self.tilesSurfObj_list = []
             for tile in self.current:
@@ -441,12 +453,19 @@ class banana(object):
 
         self.graphics_to_update = []
 
+        if time_check:
+            end_time = time.time()
+            self.time_dict['update_graphics'] = end_time - start_time
+
     def __display_text(self, SurfaceObj, x, y):
         textRectObj = SurfaceObj.get_rect()
         textRectObj.topleft = (x, y)
         DISPLAYSURF.blit(SurfaceObj, textRectObj)
 
     def printstatus(self):
+
+        if time_check:
+            start_time = time.time()
 
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
@@ -491,7 +510,15 @@ class banana(object):
 
             self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
 
+        if time_check:
+            end_time = time.time()
+            self.time_dict['send_data'] = end_time - start_time
+
+
         self.__update_graphics()
+
+        if time_check:
+            start_time = time.time()
 
         y_tile = y_tile_0
         x_tile = x_tile_0
@@ -604,6 +631,10 @@ class banana(object):
 
         self.__display_text(self.statusSurfObj, x_status, y_status)
 
+        if time_check:
+            end_time = time.time()
+            self.time_dict['display_graphics'] = end_time - start_time
+
 def main():
     # Main game loop
     global FPSCLOCK, DISPLAYSURF
@@ -617,7 +648,8 @@ def main():
     game = banana()
 
     while True: # main game loop
-        start_loop = time.time()
+        if time_check:
+            start_loop = time.time()
 
         DISPLAYSURF.fill(BGCOLOR)
 
@@ -656,8 +688,13 @@ def main():
 
         pygame.display.update()
 
-        end_loop = time.time()
-        print(f"Time taken for current loop: {end_loop - start_loop}") 
+        if time_check:
+            end_loop = time.time()
+            loop_time = end_loop - start_loop
+            game.time_dict['loop'] = loop_time
+
+            if loop_time > 0.1:
+                print(f"Delay: {game.time_dict}")
 
 
 if __name__ == "__main__":
