@@ -564,7 +564,6 @@ class banana(object):
                 if seed_recv < 1:
                     print("No data yet...")
                     # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
-                    self.mode == 'waiting'
                     self.host = True
 
                 elif self.mode == 'waiting':
