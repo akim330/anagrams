@@ -248,7 +248,7 @@ class banana(object):
             last_update = try_parsing_date(split[7])
             used_tiles_recv = ast.literal_eval(split[8])
             new_word_i_recv = ast.literal_eval(split[9])
-            taken_word_recv = ast.literal_eval(split[10])
+            taken_word_recv = split[10]
 
             return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, new_word_i_recv, taken_word_recv
         except:
