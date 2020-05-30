@@ -124,7 +124,7 @@ def numtiles_to_fontsize(numtiles):
 def try_parsing_date(text):
     for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
         try:
-            return datetime.strptime(text, fmt)
+            return datetime.datetime.strptime(text, fmt)
         except ValueError:
             pass
     raise ValueError('no valid date format found')
