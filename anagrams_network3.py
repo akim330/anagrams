@@ -220,11 +220,11 @@ class banana(object):
     def send_data(self):
         if time_check:
             start_time = time.time()
-        print(f"NET ID: {self.net.id}")
+        # print(f"NET ID: {self.net.id}")
         data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + self.taken_word
-        print(f"DATA TO SEND: {data}")
+        # print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
-        print(f"DATA RECEIVED: {reply}")
+        # print(f"DATA RECEIVED: {reply}")
 
         if time_check:
             end_time = time.time()
@@ -236,7 +236,7 @@ class banana(object):
     @staticmethod
     def parse_data(data):
         try:
-            print(f"DATA TO PARSE: {data}")
+            # print(f"DATA TO PARSE: {data}")
             split = data.split('|')
             net_id = ast.literal_eval(split[0])
             seed_recv = ast.literal_eval(split[1])
@@ -471,7 +471,7 @@ class banana(object):
                     self.my_word_taken = True
                     self.new_word_i = taken_i
 
-                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
+                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words',
                                                                          'status', 'guess']
                     self.take_end_time = datetime.datetime.now()
 
@@ -494,7 +494,7 @@ class banana(object):
                     self.my_word_taken = False
                     self.new_word_i = len(self.playerwords_list) - 1
 
-                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
+                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words',
                                                                          'status', 'guess']
                     self.take_end_time = datetime.datetime.now()
 
@@ -590,13 +590,13 @@ class banana(object):
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         if self.mode != 'solo':
             if self.host and not self.seed_set:
-                print(f"I AM THE HOST!!!")
+                # print(f"I AM THE HOST!!!")
                 self.seed = random.randint(1, 100000)
                 self.seed_set = True
 
             if time.time() - self.last_type > 0.5:
                 net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, new_word_i_recv, taken_word_recv = self.parse_data(self.send_data())
-                print(f"Net ID received: {net_id_recv}")
+                # print(f"Net ID received: {net_id_recv}")
                 if seed_recv < 1:
                     print("No data...")
                     # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
@@ -652,17 +652,17 @@ class banana(object):
         # Check if other player has made a more recent update, meaning you would need to update your lists
 
         if self.player2_last_update > self.last_update:
-            print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
+            # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < (self.take_end_time + datetime.timedelta(0,0.2)) and not self.__superset(self.current, used_tiles_recv)):
-                print("UPDATING")
+                # print("UPDATING")
                 if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
-                    print("JUST A FLIP")
+                    # print("JUST A FLIP")
                     self.current = self.player2current
                     self.last_update = self.player2_last_update
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess']
                 else:
-                    print("A TAKE!")
+                    # print("A TAKE!")
                     self.current = self.player2current
                     self.playerwords = playerwords_recv
                     self.playerwords_list = playerwords_list_recv
@@ -834,6 +834,10 @@ def main():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+
+            if not game.tiles and datetime.datetime.now() - game.last_update > datetime.timedelta(seconds=3):
+                game.status = f"No more tiles! Your score: {sum([len(i) for i in game.playerwords_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
+                game.graphics_to_update = game.graphics_to_update + ['status']
 
             if game.frozen:
                 game.status = 'Oops! Connection problem! Reconnecting...'
