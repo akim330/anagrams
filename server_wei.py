@@ -3,7 +3,7 @@ from _thread import *
 import sys
 import datetime
 
-print_check = True
+print_check = False
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 

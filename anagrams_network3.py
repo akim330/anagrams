@@ -260,7 +260,7 @@ class banana(object):
         self.updated = True
 
         if not self.tiles:
-            self.status = 'Banana is empty!'
+            self.status = f"No more tiles! Your score: {sum([len(i) for i in self.playerwords_list])}, Opponent's score: {sum([len(i) for i in self.player2words_list])}"
             self.graphics_to_update = self.graphics_to_update + ['status']
 
             return None
@@ -661,6 +661,8 @@ class banana(object):
                     self.last_update = self.player2_last_update
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess']
+
+                    last = self.tiles.pop()
                 else:
                     # print("A TAKE!")
                     self.current = self.player2current
