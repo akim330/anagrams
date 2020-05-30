@@ -756,8 +756,6 @@ def main():
                     game.graphics_to_update = game.graphics_to_update + ['guess']
                     game.last_type = time.time()
 
-
-
         game.printstatus()
 
         pygame.display.update()

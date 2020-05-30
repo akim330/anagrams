@@ -92,19 +92,21 @@ font_guess = 'freesansbold.ttf'
 size_guess = 32
 color_guess = BLACK
 x_guess = 10
-y_guess = 400
+y_guess = 500
 
 # Status
 font_status = 'freesansbold.ttf'
 size_status = 24
 color_status = BLACK
 x_status = 10
-y_status = 500
+y_status = 550
 
 def numwords_to_fontsize(numwords):
-    if numwords <= 5:
-        return size_words, y_gap_words
-    elif 5 < numwords <= 20:
+    if numwords <= 6:
+        return int(size_words/1.25), int(y_gap_words/1.25)
+    elif 6 < numwords <= 10:
+        return int(size_words / 1.75), int(y_gap_words / 1.75)
+    elif 10 < numwords <= 20:
         return int(size_words / 2), int(y_gap_words / 2)
     elif 20 < numwords <= 50:
         return int(size_words / 3), int(y_gap_words / 3)
@@ -193,10 +195,16 @@ class banana(object):
         self.take_end_time = datetime.datetime(1,1,1)
         self.used_tiles = []
 
+        self.player2present = False
+        self.mode = 'waiting'
+        self.host = False
+        self.seed_set = False
+        self.seed = 0
+
     def send_data(self):
         if time_check:
             start_time = time.time()
-        data = str(self.net.id) + "|" + str(self.tiles) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles)
+        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles)
         reply = self.net.send(data)
 
         if time_check:
@@ -211,7 +219,7 @@ class banana(object):
 
         try:
             split = data.split('|')
-            tiles = ast.literal_eval(split[1])
+            seed_recv = ast.literal_eval(split[1])
             current = ast.literal_eval(split[2])
             player2words = ast.literal_eval(split[3])
             player2words_list = ast.literal_eval(split[4])
@@ -220,9 +228,9 @@ class banana(object):
             last_update = datetime.datetime.strptime(split[7], '%Y-%m-%d %H:%M:%S.%f')
             used_tiles_recv = ast.literal_eval(split[8])
 
-            return tiles, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
+            return seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
         except:
-            return [], None, {}, [], None, None, datetime.datetime(1,1,1,0,0), []
+            raise AttributeError
 
 
 
@@ -331,7 +339,7 @@ class banana(object):
 
     def take(self, candidate):
         self.used_tiles = []
-        
+
         if time_check:
             start_time = time.time()
 
@@ -532,8 +540,24 @@ class banana(object):
             start_time = time.time()
 
         # Send network stuff, outputs of this function are the stuff you receive from the other player
-        if time.time() - self.last_type > 0.5:
-            self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
+        if self.mode != 'solo':
+            if self.host and not self.seed_set:
+                self.seed = random.randint(1, 100000)
+
+            if time.time() - self.last_type > 0.5:
+                try:
+                    seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
+                    if self.mode == 'waiting':
+                        self.mode == 'multiplayer'
+                        self.status = 'Player 2 joined. Starting multiplayer'
+                        self.graphics_to_update = self.graphics_to_update + ['status']
+                        if not self.host and not self.seed_set:
+                            self.seed = seed_recv
+                            self.seed_set = True
+                except AttributeError:
+                    # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
+                    self.mode == 'waiting'
+                    self.host = True
 
         if time_check:
             end_time = time.time()
@@ -568,7 +592,7 @@ class banana(object):
             start_time = time.time()
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
-        if self.player2_last_update > self.last_update:
+        if self.player2present and self.player2_last_update > self.last_update:
             print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < self.take_end_time and not self.__superset(self.current, used_tiles_recv)):
                 print("UPDATING")
@@ -735,6 +759,15 @@ def main():
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+
+            if game.mode == 'waiting':
+                if event.type == KEYDOWN and event.key == K_RETURN:
+                    game.mode = 'solo'
+                    game.status = 'Now playing solo'
+                    game.graphics_to_update = game.graphics_to_update + ['status']
+                else:
+                    game.status = 'Waiting for other player... Press Enter to play solo'
+                    game.graphics_to_update = game.graphics_to_update + ['status']
 
             elif event.type == KEYDOWN:
                 if event.key == K_BACKSPACE:
