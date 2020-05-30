@@ -49,7 +49,7 @@ font_tile = 'freesansbold.ttf'
 size_tile = 32
 color_tile = BLACK
 x_tile_0 = 150
-y_tile_0 = 20
+y_tile_0 = 38
 x_gap_tile = 30
 y_gap_tile = 50
 
@@ -96,7 +96,7 @@ y_guess = 400
 
 # Status
 font_status = 'freesansbold.ttf'
-size_status = 32
+size_status = 24
 color_status = BLACK
 x_status = 10
 y_status = 500
@@ -108,6 +108,17 @@ def numwords_to_fontsize(numwords):
         return int(size_words / 2), int(y_gap_words / 2)
     elif 20 < numwords <= 50:
         return int(size_words / 3), int(y_gap_words / 3)
+
+def numtiles_to_fontsize(numtiles):
+    if numtiles <= 10:
+        return size_tile, y_gap_tile, x_gap_tile
+    elif 10 < numtiles <= 40:
+        return int(size_tile / 1.5), int(y_gap_tile / 1.5), int(x_gap_tile / 1.5)
+    elif 40 < numtiles <= 60:
+        return int(size_tile / 2), int(y_gap_tile / 2), int(x_gap_tile / 2)
+    elif 60 < numtiles <= 144:
+        return int(size_tile / 4), int(y_gap_tile / 4), int(x_gap_tile / 4)
+
 
 class banana(object):
     def __init__(self):
@@ -152,6 +163,8 @@ class banana(object):
         self.player2current = []
         self.player2words = {}
         self.player2words_list = []
+        self.player2tiles = []
+        self.player2_last_update = datetime.datetime(1,1,1)
 
         self.graphics_to_update = []
 
@@ -166,9 +179,15 @@ class banana(object):
 
         self.y_gap_words = y_gap_words
         self.y_gap_opp_words = y_gap_opp_words
+        self.x_gap_tile = x_gap_tile
+        self.y_gap_tile = y_gap_tile
 
         self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
                           'display_graphics': 0, 'send_parse': 0, 'update_players': 0}
+
+        self.last_type = time.time()
+
+        self.same_root_word = ''
 
 
     def send_data(self):
@@ -208,7 +227,8 @@ class banana(object):
 
         if not self.tiles:
             self.status = 'Banana is empty!'
-            self.__display_text(self.status, x_status, y_status, self.fontObj_status, color_status)
+            self.graphics_to_update = self.graphics_to_update + ['status']
+
             return None
 
         self.last_update = datetime.datetime.now()
@@ -245,7 +265,7 @@ class banana(object):
         return str
 
 
-    def __check_steal(self, candidate, etyms_candidate, word_dict, is_opponent):
+    def __check_steal(self, candidate, etyms_candidate, is_opponent):
         # Check whether a steal happens
         # Input a candidate word (i.e. guess), its merriam stripped version,
         # a dictionary with the words to take from (plus their merriam stripped versions) and
@@ -256,7 +276,15 @@ class banana(object):
         # Set event_type to 'tiles' arbitrarily
         event_type = 'tiles'
 
-        for i, word in enumerate(word_dict):
+        if is_opponent:
+            word_list = self.player2words_list
+            word_dict = self.player2words
+        else:
+            word_list = self.playerwords_list
+            word_dict = self.playerwords
+
+
+        for i, word in enumerate(word_list):
             # First, check if candidate is a superset of the current word
             if self.__superset(candidate, word, strict=True):
 
@@ -274,11 +302,15 @@ class banana(object):
                         root_overlap = False
 
                     if root_overlap:
+                        self.same_root_word = word
+                        self.root = set(etyms_candidate).intersection(etyms_word).pop()
                         event_type = 'trivial'
                     else:
                         event_type = 'steal'
                         taken_word = word
                         taken_i = i
+                        print(f"Taken index: {taken_i}")
+                        print(f"Word taken: {self.playerwords_list[taken_i]}")
                         return True, event_type, taken_word, taken_i
         if not is_opponent and self.__superset(self.current, candidate, strict=False):
             # This is to check middle steals. We have "is_opponent" because we're running this current __check_steal
@@ -298,6 +330,8 @@ class banana(object):
     def take(self, candidate):
         if time_check:
             start_time = time.time()
+
+        take_time = datetime.datetime.now()
 
         # First check if has 3 letters
         if len(candidate) < 3:
@@ -326,11 +360,11 @@ class banana(object):
         etyms_candidate = api.get_etym(candidate)
 
         # Check if can take the other player's words (not checking middle steal)
-        is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, etyms_candidate, self.player2words, True)
+        is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, etyms_candidate, True)
 
         if is_taken:
             # Get time of this steal
-            self.last_update = datetime.datetime.now()
+            self.last_update = take_time
 
             if event_type == 'steal': # in theory, this if statement is unnecessary since there are no middle steals
                 # Make the candidate word into a list to remove individual letters.
@@ -367,10 +401,10 @@ class banana(object):
 
         # if could not take the other player's words, check if can take one's own
         if not is_taken:
-            self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, etyms_candidate, self.playerwords, False)
+            self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, etyms_candidate, False)
 
             if self_is_taken:
-                self.last_update = datetime.datetime.now()
+                self.last_update = take_time
                 self.updated = True
                 if event_type == 'steal':
                     candidate_list = list(candidate)
@@ -410,9 +444,9 @@ class banana(object):
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
 
-            elif error_trivial_extension:
+            elif error_trivial_extension or event_type == 'trivial':
                 self.previous_guess = self.guess
-                self.status = "Same root! " + f"({self.previous_guess})"
+                self.status = "Same root! " + f"({self.same_root_word} and {self.previous_guess} share root {self.root})"
                 self.graphics_to_update = self.graphics_to_update + ['status', 'guess']
             elif error_tiles:
                 self.previous_guess = self.guess
@@ -433,6 +467,10 @@ class banana(object):
 
         if 'tiles' in self.graphics_to_update:
             self.tilesSurfObj_list = []
+
+            size_tiles, self.y_gap_tile, self.x_gap_tile = numtiles_to_fontsize(len(self.current))
+            self.fontObj_tile = pygame.font.Font(font_words, size_tiles)
+
             for tile in self.current:
                 self.tilesSurfObj_list.append(self.fontObj_tile.render(tile, True, color_tile))
 
@@ -471,14 +509,19 @@ class banana(object):
         textRectObj.topleft = (x, y)
         DISPLAYSURF.blit(SurfaceObj, textRectObj)
 
+    def __display_text_tiles(self, SurfaceObj, x, y):
+        textRectObj = SurfaceObj.get_rect()
+        textRectObj.center = (x, y)
+        DISPLAYSURF.blit(SurfaceObj, textRectObj)
+
     def printstatus(self):
 
         if time_check:
             start_time = time.time()
 
-
         # Send network stuff, outputs of this function are the stuff you receive from the other player
-        self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
+        if time.time() - self.last_type > 0.5:
+            self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update = self.parse_data(self.send_data())
 
         if time_check:
             end_time = time.time()
@@ -558,9 +601,9 @@ class banana(object):
         """
 
         for i, tile in enumerate(self.tilesSurfObj_list):
-            x_tile = x_tile + x_gap_tile
+            x_tile = x_tile + self.x_gap_tile
 
-            self.__display_text(tile, x_tile, y_tile)
+            self.__display_text_tiles(tile, x_tile, y_tile)
 
             """
             tileSurfaceObj = self.fontObj.render(tile, True, BLACK)
@@ -569,8 +612,8 @@ class banana(object):
             DISPLAYSURF.blit(tileSurfaceObj, tileRectObj)
             """
 
-            if i % 10 == 9:
-                y_tile = y_tile + y_gap_tile
+            if i % 20 == 19:
+                y_tile = y_tile + self.y_gap_tile
                 x_tile = x_tile_0
 
 
@@ -663,16 +706,22 @@ def main():
 
     game = banana()
 
+    backspace_hold = False
+
     while True: # main game loop
+        FPSCLOCK.tick(60)
+
         if time_check:
             start_loop = time.time()
 
         DISPLAYSURF.fill(BGCOLOR)
 
         for event in pygame.event.get():
+
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+
             elif event.type == KEYDOWN:
                 if event.key == K_BACKSPACE:
                     if game.guess == '':
@@ -681,6 +730,7 @@ def main():
                         # Delete one letter from the guess
                         game.guess = game.guess[:-1]
                         game.graphics_to_update = game.graphics_to_update + ['guess']
+                        game.last_type = time.time()
 
                 elif event.key == K_SPACE:
                     # Don't do anything if input is a space
@@ -699,6 +749,9 @@ def main():
                     # if letter is typed then add it to the current guess
                     game.guess = game.guess + event.unicode.upper()
                     game.graphics_to_update = game.graphics_to_update + ['guess']
+                    game.last_type = time.time()
+
+
 
         game.printstatus()
 
