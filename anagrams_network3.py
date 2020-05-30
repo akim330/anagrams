@@ -189,13 +189,14 @@ class banana(object):
 
         self.same_root_word = ''
 
-        self.tiles_used = []
-
+        self.take_start_time = datetime.datetime(1,1,1)
+        self.take_end_time = datetime.datetime(1,1,1)
+        self.used_tiles = []
 
     def send_data(self):
         if time_check:
             start_time = time.time()
-        data = str(self.net.id) + "|" + str(self.tiles) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.tiles_used)
+        data = str(self.net.id) + "|" + str(self.tiles) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles)
         reply = self.net.send(data)
 
         if time_check:
@@ -217,9 +218,9 @@ class banana(object):
             playerwords = ast.literal_eval(split[5])
             playerwords_list = ast.literal_eval(split[6])
             last_update = datetime.datetime.strptime(split[7], '%Y-%m-%d %H:%M:%S.%f')
-            tiles_used_recv = ast.literal_eval(split[8])
+            used_tiles_recv = ast.literal_eval(split[8])
 
-            return tiles, current, player2words, player2words_list, playerwords, playerwords_list, last_update, tiles_used_recv
+            return tiles, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
         except:
             return [], None, {}, [], None, None, datetime.datetime(1,1,1,0,0), []
 
@@ -332,7 +333,7 @@ class banana(object):
         if time_check:
             start_time = time.time()
 
-        take_time = datetime.datetime.now()
+        self.take_start_time = datetime.datetime.now()
 
         # First check if has 3 letters
         if len(candidate) < 3:
@@ -365,15 +366,16 @@ class banana(object):
 
         if is_taken:
             # Get time of this steal
-            self.last_update = take_time
+            self.last_update = self.take_start_time
 
             if event_type == 'steal': # in theory, this if statement is unnecessary since there are no middle steals
                 # Make the candidate word into a list to remove individual letters.
                 candidate_list = list(candidate)
 
                 # Delete the taken word from opponent's list, add it to your own dictionary and corresponding list (list for ordering purposes)
-                del self.player2words[taken_word]
                 self.player2words_list.remove(taken_word)
+                if not taken_word in self.player2words_list:
+                    del self.player2words[taken_word]
 
                 self.playerwords.update({candidate: etyms_candidate})
                 self.playerwords_list.append(candidate)
@@ -383,7 +385,7 @@ class banana(object):
                     candidate_list.remove(letter)
 
                 for letter in candidate_list:
-                    self.tiles_used.append(letter)
+                    self.used_tiles.append(letter)
                     self.current.remove(letter)
                 self.previous_guess = self.guess
                 self.status = "Success! " + f"({self.previous_guess})"
@@ -392,6 +394,7 @@ class banana(object):
                 self.middle_used = candidate_list
 
             self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
+            self.take_end_time = datetime.datetime.now()
 
         else:
             # If no steal was triggered above, then couldn't steal opponent's words for one of the reasons below
@@ -406,20 +409,21 @@ class banana(object):
             self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, etyms_candidate, False)
 
             if self_is_taken:
-                self.last_update = take_time
+                self.last_update = self.take_start_time
                 self.updated = True
                 if event_type == 'steal':
                     candidate_list = list(candidate)
 
-                    del self.playerwords[taken_word]
                     self.playerwords.update({candidate: etyms_candidate})
 
                     self.playerwords_list[taken_i] = candidate
+                    if not taken_word in self.playerwords_list:
+                        del self.playerwords[taken_word]
 
                     for letter in taken_word:
                         candidate_list.remove(letter)
                     for letter in candidate_list:
-                        self.tiles_used.append(letter)
+                        self.used_tiles.append(letter)
                         self.current.remove(letter)
                     self.previous_guess = self.guess
                     self.status = "Success! " + f"({self.previous_guess})"
@@ -429,12 +433,13 @@ class banana(object):
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
+                    self.take_end_time = datetime.datetime.now()
 
                 elif event_type == 'middle':
                     candidate_list = list(candidate)
 
                     for letter in candidate_list:
-                        self.tiles_used.append(letter)
+                        self.used_tiles.append(letter)
                         self.current.remove(letter)
                     self.playerwords.update({candidate: etyms_candidate})
                     self.playerwords_list.append(candidate)
@@ -447,6 +452,7 @@ class banana(object):
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
+                    self.take_end_time = datetime.datetime.now()
 
             elif error_trivial_extension or event_type == 'trivial':
                 self.previous_guess = self.guess
@@ -525,7 +531,7 @@ class banana(object):
 
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         if time.time() - self.last_type > 0.5:
-            self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, tiles_used_recv = self.parse_data(self.send_data())
+            self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
 
         if time_check:
             end_time = time.time()
@@ -561,18 +567,21 @@ class banana(object):
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
         if self.player2_last_update > self.last_update:
-            if print_check:
-                print("UPDATING")
-                print(f"Old Words: {self.playerwords}")
-                print(f"New Words: {playerwords_recv}")
-            self.current = self.player2current
-            self.playerwords = playerwords_recv
-            self.playerwords_list = playerwords_list_recv
-            self.last_update = self.player2_last_update
-            self.player2words = player2words_recv
-            self.player2words_list = player2words_list_recv
+            if not (self.take_start_time < self.player2_last_update < self.take_end_time and not self.__superset(self.current, used_tiles_recv)):
+                if print_check:
+                    print("UPDATING")
+                    print(f"Old Words: {self.playerwords}")
+                    print(f"New Words: {playerwords_recv}")
+                self.current = self.player2current
+                self.playerwords = playerwords_recv
+                self.playerwords_list = playerwords_list_recv
+                self.last_update = self.player2_last_update
+                self.player2words = player2words_recv
+                self.player2words_list = player2words_list_recv
 
-            self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
+                self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
+            else:
+                self.last_update = datetime.datetime.now()
 
         if time_check:
             end_time = time.time()

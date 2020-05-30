@@ -371,8 +371,9 @@ class banana(object):
                 candidate_list = list(candidate)
 
                 # Delete the taken word from opponent's list, add it to your own dictionary and corresponding list (list for ordering purposes)
-                del self.player2words[taken_word]
                 self.player2words_list.remove(taken_word)
+                if not taken_word in self.player2words_list:
+                    del self.player2words[taken_word]
 
                 self.playerwords.update({candidate: etyms_candidate})
                 self.playerwords_list.append(candidate)
@@ -410,10 +411,11 @@ class banana(object):
                 if event_type == 'steal':
                     candidate_list = list(candidate)
 
-                    del self.playerwords[taken_word]
                     self.playerwords.update({candidate: etyms_candidate})
 
                     self.playerwords_list[taken_i] = candidate
+                    if not taken_word in self.playerwords_list:
+                        del self.playerwords[taken_word]
 
                     for letter in taken_word:
                         candidate_list.remove(letter)
