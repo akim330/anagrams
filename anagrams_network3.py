@@ -330,6 +330,8 @@ class banana(object):
 
 
     def take(self, candidate):
+        self.used_tiles = []
+        
         if time_check:
             start_time = time.time()
 
