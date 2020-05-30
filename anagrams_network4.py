@@ -164,6 +164,7 @@ class banana(object):
         self.fontObj_words = pygame.font.Font(font_words, size_words)
         self.fontObj_guess = pygame.font.Font(font_guess, size_guess)
         self.fontObj_status = pygame.font.Font(font_status, size_status)
+        self.fontObj_flip = pygame.font.Font(font_flip, size_flip)
 
         self.fontObj_opp = pygame.font.Font(font_your, size_your)
         self.fontObj_opp_words = pygame.font.Font(font_words, size_words)
@@ -224,11 +225,15 @@ class banana(object):
         self.taken_i = -1
         self.new_word_i = -1
 
+        self.flip_waiting = False
+        self.flip_status = ''
+        self.time_flip = time.time()
+
     def send_data(self):
         if time_check:
             start_time = time.time()
         # print(f"NET ID: {self.net.id}")
-        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + self.taken_word
+        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + self.taken_word + "|" + self.flip_waiting
         # print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
         # print(f"DATA RECEIVED: {reply}")
@@ -256,10 +261,11 @@ class banana(object):
             used_tiles_recv = ast.literal_eval(split[8])
             new_word_i_recv = ast.literal_eval(split[9])
             taken_word_recv = split[10]
+            flip_waiting_recv = ast.literal_eval(split[11])
 
-            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, new_word_i_recv, taken_word_recv
+            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, new_word_i_recv, taken_word_recv, flip_waiting_recv
         except:
-            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1, ''
+            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1, '', False
 
 
 
@@ -526,6 +532,10 @@ class banana(object):
         if time_check:
             start_time = time.time()
 
+        if 'flip' in self.graphics_to_update:
+            self.flipSurfObj = self.fontObj_flip.render(self.flip_status, True, color_flip)
+
+
         if 'tiles' in self.graphics_to_update:
             self.tilesSurfObj_list = []
 
@@ -602,7 +612,7 @@ class banana(object):
                 self.seed_set = True
 
             if time.time() - self.last_type > 0.5:
-                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, new_word_i_recv, taken_word_recv = self.parse_data(self.send_data())
+                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, new_word_i_recv, taken_word_recv, flip_waiting_recv = self.parse_data(self.send_data())
                 # print(f"Net ID received: {net_id_recv}")
                 if seed_recv < 1:
                     print("No data...")
@@ -662,14 +672,21 @@ class banana(object):
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < (self.take_end_time + datetime.timedelta(0,0.2)) and not self.__superset(self.current, used_tiles_recv)):
                 # print("UPDATING")
-                if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
+                if not self.flip_waiting and flip_waiting_recv:
+                    self.flip_waiting = True
+                    self.flip_status = 'Ready...'
+                    self.graphics_to_update = self.graphics_to_update + ['flip']
+
+                elif self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
                     self.current = self.player2current
                     self.last_update = self.player2_last_update
+                    self.flip_status = 'Flipped!'
 
-                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess']
+                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess', 'flip']
 
                     last = self.tiles.pop()
+                    self.flip_waiting = False
                 else:
                     # print("A TAKE!")
                     self.current = self.player2current
@@ -810,6 +827,8 @@ class banana(object):
 
             y_opp_words_local = y_opp_words_local + self.y_gap_opp_words
 
+        self.__display_text(self.flipSurfObj, x_flip, y_flip)
+
         self.__display_text(self.statusSurfObj, x_status, y_status)
 
         if time_check:
@@ -844,13 +863,20 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-            if not game.tiles and datetime.datetime.now() - game.last_update > datetime.timedelta(seconds=3):
-                game.status = f"No more tiles! Your score: {sum([len(i) for i in game.playerwords_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
-                game.graphics_to_update = game.graphics_to_update + ['status']
-
             if game.frozen:
                 game.status = 'Oops! Connection problem! Reconnecting...'
                 game.graphics_to_update = game.graphics_to_update + ['status']
+
+            elif not game.tiles and datetime.datetime.now() - game.last_update > datetime.timedelta(seconds=3):
+                game.status = f"No more tiles! Your score: {sum([len(i) for i in game.playerwords_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
+                game.graphics_to_update = game.graphics_to_update + ['status']
+
+            elif game.flip_waiting:
+                if time.time() - game.time_flip > 1:
+                    game.flip()
+                    game.flip_status = 'Flipped!'
+                    game.graphics_to_update = game.graphics_to_update + ['flip']
+                    game.flip_waiting = False
 
             elif game.mode == 'waiting':
                 if event.type == KEYDOWN and event.key == K_RETURN:
@@ -880,7 +906,11 @@ def main():
                 elif event.key == K_RETURN:
                     # if Return and no guess is present, then flip next tile. If guess is present, see if it's a take
                     if game.guess == '':
-                        game.flip()
+                        game.flip_waiting = True
+                        game.flip_status = 'Ready...'
+                        game.graphics_to_update = game.graphics_to_update + ['flip']
+                        game.time_flip = time.time()
+
                     else:
                         game.take(game.guess.upper())
 

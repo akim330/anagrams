@@ -3,11 +3,11 @@ from _thread import *
 import sys
 import datetime
 
-print_check = True
+print_check = False
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server = '192.168.1.8'
+server = '192.168.1.9'
 port = 5555
 
 server_ip = socket.gethostbyname(server)
