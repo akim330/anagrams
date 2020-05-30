@@ -561,7 +561,7 @@ class banana(object):
             if time.time() - self.last_type > 0.5:
                 net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
                 print(f"Net ID received: {net_id_recv}")
-                if net_id_recv < 0:
+                if seed_recv < 1:
                     print("No data yet...")
                     # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
                     self.mode == 'waiting'
