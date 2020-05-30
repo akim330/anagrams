@@ -234,7 +234,7 @@ class banana(object):
             player2words_list = ast.literal_eval(split[4])
             playerwords = ast.literal_eval(split[5])
             playerwords_list = ast.literal_eval(split[6])
-            last_update = datetime.datetime.strptime(split[7], '%Y-%m-%d %H:%M:%S.%f')
+            last_update = try_parsing_date(split[7])
             used_tiles_recv = ast.literal_eval(split[8])
 
             return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
