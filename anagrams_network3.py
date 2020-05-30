@@ -121,6 +121,14 @@ def numtiles_to_fontsize(numtiles):
     elif 60 < numtiles <= 144:
         return int(size_tile / 4), int(y_gap_tile / 4), int(x_gap_tile / 4)
 
+def try_parsing_date(text):
+    for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            pass
+    raise ValueError('no valid date format found')
+
 
 class banana(object):
     def __init__(self):
@@ -548,6 +556,7 @@ class banana(object):
 
             if time.time() - self.last_type > 0.5:
                 net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
+                print(f"Net ID received: {net_id_recv}")
                 if net_id_recv < 0:
                     print("No data yet...")
                     # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
