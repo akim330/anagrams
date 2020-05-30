@@ -190,6 +190,8 @@ class banana(object):
 
         self.graphics_to_update = []
 
+        self.flip_status = ''
+
         self.currentSurfObj = self.fontObj_current.render('Current: ', True, color_current)
         self.tilesSurfObj_list = []
         self.yourSurfObj = self.fontObj_your.render('Your Words: ', True, color_your)
@@ -227,7 +229,6 @@ class banana(object):
         self.new_word_i = -1
 
         self.flip_waiting = False
-        self.flip_status = ''
         self.time_flip = time.time()
 
     def send_data(self):
