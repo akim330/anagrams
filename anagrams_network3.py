@@ -13,7 +13,7 @@ import pygame, sys
 from pygame.locals import *
 
 print_check = True
-time_check = True
+time_check = False
 
 FPS = 30
 WINDOWWIDTH = 640
@@ -567,11 +567,10 @@ class banana(object):
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
         if self.player2_last_update > self.last_update:
+            print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < self.take_end_time and not self.__superset(self.current, used_tiles_recv)):
-                if print_check:
-                    print("UPDATING")
-                    print(f"Old Words: {self.playerwords}")
-                    print(f"New Words: {playerwords_recv}")
+                print("UPDATING")
+
                 self.current = self.player2current
                 self.playerwords = playerwords_recv
                 self.playerwords_list = playerwords_list_recv
