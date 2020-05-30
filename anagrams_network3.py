@@ -203,7 +203,6 @@ class banana(object):
         self.take_end_time = datetime.datetime(1,1,1)
         self.used_tiles = []
 
-        self.player2present = False
         self.mode = 'waiting'
         self.host = False
         self.seed_set = False
@@ -608,7 +607,7 @@ class banana(object):
             start_time = time.time()
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
-        if self.player2present and self.player2_last_update > self.last_update:
+        if self.player2_last_update > self.last_update:
             print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < self.take_end_time and not self.__superset(self.current, used_tiles_recv)):
                 print("UPDATING")
