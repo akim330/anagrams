@@ -165,7 +165,7 @@ class banana(object):
         self.previous_guess = ''
         self.fresh_take = False
         self.middle_used = []
-        self.pre_take_word = ''
+        self.taken_word = ''
 
         self.status = ''
         self.last_update = datetime.datetime(1,1,1)
@@ -215,12 +215,13 @@ class banana(object):
 
         self.who_took = ''
         self.taken_i = -1
+        self.new_word_i = -1
 
     def send_data(self):
         if time_check:
             start_time = time.time()
         print(f"NET ID: {self.net.id}")
-        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.taken_i)
+        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + str(self.taken_word)
         print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
         print(f"DATA RECEIVED: {reply}")
@@ -246,11 +247,12 @@ class banana(object):
             playerwords_list = ast.literal_eval(split[6])
             last_update = try_parsing_date(split[7])
             used_tiles_recv = ast.literal_eval(split[8])
-            taken_i = ast.literal_eval(split[9])
+            new_word_i_recv = ast.literal_eval(split[9])
+            taken_word_recv = ast.literal_eval(split[10])
 
-            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, taken_i
+            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, new_word_i_recv, taken_word_recv
         except:
-            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1
+            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1, ''
 
 
 
@@ -420,10 +422,12 @@ class banana(object):
                 self.previous_guess = self.guess
                 self.status = "Success! " + f"({taken_word} -> {self.previous_guess})"
                 self.fresh_take = True
-                self.pre_take_word = taken_word
+                self.taken_word = taken_word
                 self.middle_used = candidate_list
                 self.who_took = 'self'
                 self.taken_i = taken_i
+                self.my_word_taken = False
+                self.new_word_i = len(self.playerwords_list) - 1
 
             self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             self.take_end_time = datetime.datetime.now()
@@ -460,10 +464,12 @@ class banana(object):
                     self.previous_guess = self.guess
                     self.status = "Success! " + f"({taken_word} -> {self.previous_guess})"
                     self.fresh_take = True
-                    self.pre_take_word = taken_word
+                    self.taken_word = taken_word
                     self.middle_used = candidate_list
                     self.who_took = 'self'
                     self.taken_i = taken_i
+                    self.my_word_taken = True
+                    self.new_word_i = taken_i
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
@@ -479,12 +485,14 @@ class banana(object):
                     self.playerwords_list.append(candidate)
 
                     self.previous_guess = self.guess
-                    self.status = "Success! " + f"({taken_word} -> {self.previous_guess})"
+                    self.status = "Success! " + f"({self.previous_guess} from the middle)"
                     self.fresh_take = True
-                    self.pre_take_word = taken_word
+                    self.taken_word = taken_word
                     self.middle_used = candidate_list
                     self.who_took = 'self'
                     self.taken_i = len(self.playerwords_list) - 1
+                    self.my_word_taken = False
+                    self.new_word_i = len(self.playerwords_list) - 1
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
@@ -528,7 +536,7 @@ class banana(object):
 
             if self.who_took == 'self':
                 for i, word in enumerate(self.playerwords_list):
-                    if i == self.taken_i:
+                    if i == self.new_word_i:
                         self.playerwordsSurfObj_list.append(self.fontObj_words.render(word, True, color_taken))
                     else:
                         self.playerwordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
@@ -544,7 +552,7 @@ class banana(object):
 
             if self.who_took == 'opp':
                 for i, word in enumerate(self.player2words_list):
-                    if i == self.taken_i:
+                    if i == self.new_word_i:
                         self.player2wordsSurfObj_list.append(self.fontObj_words.render(word, True, color_taken))
                     else:
                         self.player2wordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
@@ -587,7 +595,7 @@ class banana(object):
                 self.seed_set = True
 
             if time.time() - self.last_type > 0.5:
-                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, taken_i_recv = self.parse_data(self.send_data())
+                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, new_word_i_recv, taken_word_recv = self.parse_data(self.send_data())
                 print(f"Net ID received: {net_id_recv}")
                 if seed_recv < 1:
                     print("No data...")
@@ -662,7 +670,9 @@ class banana(object):
                     self.player2words_list = player2words_list_recv
 
                     self.who_took = 'opp'
-                    self.taken_i = taken_i_recv
+                    self.new_word_i = new_word_i_recv
+
+                    self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}'
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             else:
