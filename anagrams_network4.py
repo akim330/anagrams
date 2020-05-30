@@ -198,6 +198,7 @@ class banana(object):
         self.player2wordsSurfObj_list = []
         self.guessSurfObj = self.fontObj_guess.render('Take: ' + self.guess, True, color_guess)
         self.statusSurfObj = self.fontObj_status.render(self.status, True, color_status)
+        self.flipSurfObj = self.fontObj_flip.render(self.flip_status, True, color_flip)
 
         self.y_gap_words = y_gap_words
         self.y_gap_opp_words = y_gap_opp_words
