@@ -23,6 +23,8 @@ WINDOWHEIGHT = 640
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 NAVYBLUE = (60, 60, 100)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 
 BGCOLOR = WHITE
 TEXTCOLOR = BLACK
@@ -86,6 +88,8 @@ x_opp_words = 300
 y_opp_words = y_opp + y_gap_opp
 x_gap_opp_words = 100
 y_gap_opp_words = 50
+
+color_taken = BLUE
 
 # Guess
 font_guess = 'freesansbold.ttf'
@@ -207,12 +211,16 @@ class banana(object):
         self.host = False
         self.seed_set = False
         self.seed = 0
+        self.frozen = False
+
+        self.who_took = ''
+        self.taken_i = -1
 
     def send_data(self):
         if time_check:
             start_time = time.time()
         print(f"NET ID: {self.net.id}")
-        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles)
+        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.taken_i)
         print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
         print(f"DATA RECEIVED: {reply}")
@@ -238,10 +246,11 @@ class banana(object):
             playerwords_list = ast.literal_eval(split[6])
             last_update = try_parsing_date(split[7])
             used_tiles_recv = ast.literal_eval(split[8])
+            taken_i = ast.literal_eval(split[9])
 
-            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
+            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, taken_i
         except:
-            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
+            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1
 
 
 
@@ -409,10 +418,12 @@ class banana(object):
                     self.used_tiles.append(letter)
                     self.current.remove(letter)
                 self.previous_guess = self.guess
-                self.status = "Success! " + f"({self.previous_guess})"
+                self.status = "Success! " + f"({taken_word} -> {self.previous_guess})"
                 self.fresh_take = True
                 self.pre_take_word = taken_word
                 self.middle_used = candidate_list
+                self.who_took = 'self'
+                self.taken_i = taken_i
 
             self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             self.take_end_time = datetime.datetime.now()
@@ -447,10 +458,12 @@ class banana(object):
                         self.used_tiles.append(letter)
                         self.current.remove(letter)
                     self.previous_guess = self.guess
-                    self.status = "Success! " + f"({self.previous_guess})"
+                    self.status = "Success! " + f"({taken_word} -> {self.previous_guess})"
                     self.fresh_take = True
                     self.pre_take_word = taken_word
                     self.middle_used = candidate_list
+                    self.who_took = 'self'
+                    self.taken_i = taken_i
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
@@ -466,10 +479,12 @@ class banana(object):
                     self.playerwords_list.append(candidate)
 
                     self.previous_guess = self.guess
-                    self.status = "Success! " + f"({self.previous_guess})"
+                    self.status = "Success! " + f"({taken_word} -> {self.previous_guess})"
                     self.fresh_take = True
                     self.pre_take_word = taken_word
                     self.middle_used = candidate_list
+                    self.who_took = 'self'
+                    self.taken_i = len(self.playerwords_list) - 1
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords',
                                                                          'status', 'guess']
@@ -511,8 +526,15 @@ class banana(object):
             size_words, self.y_gap_words = numwords_to_fontsize(len(self.playerwords_list))
             self.fontObj_words = pygame.font.Font(font_words, size_words)
 
-            for word in self.playerwords_list:
-                self.playerwordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
+            if self.who_took == 'self':
+                for i, word in enumerate(self.playerwords_list):
+                    if i == self.taken_i:
+                        self.playerwordsSurfObj_list.append(self.fontObj_words.render(word, True, color_taken))
+                    else:
+                        self.playerwordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
+            else:
+                for word in self.playerwords_list:
+                    self.playerwordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
 
         if 'player2words' in self.graphics_to_update:
             self.player2wordsSurfObj_list = []
@@ -520,8 +542,15 @@ class banana(object):
             size_opp_words, self.y_gap_opp_words = numwords_to_fontsize(len(self.player2words_list))
             self.fontObj_words = pygame.font.Font(font_words, size_opp_words)
 
-            for word in self.player2words_list:
-                self.player2wordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
+            if self.who_took == 'opp':
+                for i, word in enumerate(self.player2words_list):
+                    if i == self.taken_i:
+                        self.player2wordsSurfObj_list.append(self.fontObj_words.render(word, True, color_taken))
+                    else:
+                        self.player2wordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
+            else:
+                for word in self.player2words_list:
+                    self.player2wordsSurfObj_list.append(self.fontObj_words.render(word, True, color_words))
 
         if 'guess' in self.graphics_to_update:
             self.guessSurfObj = self.fontObj_guess.render('Take: ' + self.guess, True, color_guess)
@@ -558,12 +587,16 @@ class banana(object):
                 self.seed_set = True
 
             if time.time() - self.last_type > 0.5:
-                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
+                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, taken_i_recv = self.parse_data(self.send_data())
                 print(f"Net ID received: {net_id_recv}")
                 if seed_recv < 1:
-                    print("No data yet...")
+                    print("No data...")
                     # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
-                    self.host = True
+                    if not self.seed_set:
+                        self.host = True
+                    elif self.mode == 'multiplayer':
+                        self.frozen = True
+
 
                 elif self.mode == 'waiting':
                     self.mode = 'multiplayer'
@@ -572,6 +605,8 @@ class banana(object):
                     if not self.host and not self.seed_set:
                         self.seed = seed_recv
                         self.seed_set = True
+                else:
+                    self.frozen = False
 
 
         if time_check:
@@ -611,15 +646,25 @@ class banana(object):
             print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < self.take_end_time and not self.__superset(self.current, used_tiles_recv)):
                 print("UPDATING")
+                if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
+                    print("JUST A FLIP")
+                    self.current = self.player2current
+                    self.last_update = self.player2_last_update
 
-                self.current = self.player2current
-                self.playerwords = playerwords_recv
-                self.playerwords_list = playerwords_list_recv
-                self.last_update = self.player2_last_update
-                self.player2words = player2words_recv
-                self.player2words_list = player2words_list_recv
+                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess']
+                else:
+                    print("A TAKE!")
+                    self.current = self.player2current
+                    self.playerwords = playerwords_recv
+                    self.playerwords_list = playerwords_list_recv
+                    self.last_update = self.player2_last_update
+                    self.player2words = player2words_recv
+                    self.player2words_list = player2words_list_recv
 
-                self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
+                    self.who_took = 'opp'
+                    self.taken_i = taken_i_recv
+
+                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             else:
                 self.last_update = datetime.datetime.now()
 
@@ -684,6 +729,7 @@ class banana(object):
         y_words_local = y_words
 
         for i, word in enumerate(self.playerwordsSurfObj_list):
+
 
             self.__display_text(word, x_words_local, y_words_local)
 
@@ -775,7 +821,11 @@ def main():
                 pygame.quit()
                 sys.exit()
 
-            if game.mode == 'waiting':
+            if game.frozen:
+                game.status = 'Oops! Connection problem! Reconnecting...'
+                game.graphics_to_update = game.graphics_to_update + ['status']
+
+            elif game.mode == 'waiting':
                 if event.type == KEYDOWN and event.key == K_RETURN:
                     game.mode = 'solo'
                     game.status = 'Now playing solo'
