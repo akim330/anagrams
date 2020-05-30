@@ -487,7 +487,7 @@ class banana(object):
                     self.previous_guess = self.guess
                     self.status = "Success! " + f"({self.previous_guess} from the middle)"
                     self.fresh_take = True
-                    self.taken_word = 'middle tiles'
+                    self.taken_word = '0'
                     self.middle_used = candidate_list
                     self.who_took = 'self'
                     self.taken_i = len(self.playerwords_list) - 1
@@ -672,7 +672,10 @@ class banana(object):
                     self.who_took = 'opp'
                     self.new_word_i = new_word_i_recv
 
-                    self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}'
+                    if taken_word_recv == '0':
+                        self.status = f'Opponent took {self.player2words_list[new_word_i_recv]} from the middle'
+                    else:
+                        self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}'
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             else:
