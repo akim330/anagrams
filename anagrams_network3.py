@@ -567,7 +567,7 @@ class banana(object):
                     self.host = True
 
                 elif self.mode == 'waiting':
-                    self.mode == 'multiplayer'
+                    self.mode = 'multiplayer'
                     self.status = 'Player 2 joined. Starting multiplayer'
                     self.graphics_to_update = self.graphics_to_update + ['status']
                     if not self.host and not self.seed_set:
