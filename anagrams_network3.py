@@ -165,7 +165,7 @@ class banana(object):
         self.previous_guess = ''
         self.fresh_take = False
         self.middle_used = []
-        self.taken_word = ''
+        self.taken_word = "\'\'"
 
         self.status = ''
         self.last_update = datetime.datetime(1,1,1)
@@ -221,7 +221,7 @@ class banana(object):
         if time_check:
             start_time = time.time()
         print(f"NET ID: {self.net.id}")
-        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + str(self.taken_word)
+        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + self.taken_word
         print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
         print(f"DATA RECEIVED: {reply}")
