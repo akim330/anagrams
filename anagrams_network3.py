@@ -204,6 +204,7 @@ class banana(object):
     def send_data(self):
         if time_check:
             start_time = time.time()
+        print(f"NET ID: {self.net.id}")
         data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles)
         reply = self.net.send(data)
 
@@ -216,9 +217,9 @@ class banana(object):
 
     @staticmethod
     def parse_data(data):
-
         try:
             split = data.split('|')
+            net_id = ast.literal_eval(split[0])
             seed_recv = ast.literal_eval(split[1])
             current = ast.literal_eval(split[2])
             player2words = ast.literal_eval(split[3])
@@ -228,9 +229,9 @@ class banana(object):
             last_update = datetime.datetime.strptime(split[7], '%Y-%m-%d %H:%M:%S.%f')
             used_tiles_recv = ast.literal_eval(split[8])
 
-            return seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
+            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv
         except:
-            raise AttributeError
+            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
 
 
 
@@ -543,21 +544,24 @@ class banana(object):
         if self.mode != 'solo':
             if self.host and not self.seed_set:
                 self.seed = random.randint(1, 100000)
+                self.seed_set = True
 
             if time.time() - self.last_type > 0.5:
-                try:
-                    seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
-                    if self.mode == 'waiting':
-                        self.mode == 'multiplayer'
-                        self.status = 'Player 2 joined. Starting multiplayer'
-                        self.graphics_to_update = self.graphics_to_update + ['status']
-                        if not self.host and not self.seed_set:
-                            self.seed = seed_recv
-                            self.seed_set = True
-                except AttributeError:
+                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = self.parse_data(self.send_data())
+                if net_id_recv < 0:
+                    print("No data yet...")
                     # self.player2tiles, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv = return [], None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), []
                     self.mode == 'waiting'
                     self.host = True
+
+                elif self.mode == 'waiting':
+                    self.mode == 'multiplayer'
+                    self.status = 'Player 2 joined. Starting multiplayer'
+                    self.graphics_to_update = self.graphics_to_update + ['status']
+                    if not self.host and not self.seed_set:
+                        self.seed = seed_recv
+                        self.seed_set = True
+
 
         if time_check:
             end_time = time.time()
