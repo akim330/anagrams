@@ -487,7 +487,7 @@ class banana(object):
                     self.previous_guess = self.guess
                     self.status = "Success! " + f"({self.previous_guess} from the middle)"
                     self.fresh_take = True
-                    self.taken_word = taken_word
+                    self.taken_word = 'middle tiles'
                     self.middle_used = candidate_list
                     self.who_took = 'self'
                     self.taken_i = len(self.playerwords_list) - 1
