@@ -650,9 +650,10 @@ class banana(object):
             start_time = time.time()
 
         # Check if other player has made a more recent update, meaning you would need to update your lists
+
         if self.player2_last_update > self.last_update:
             print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
-            if not (self.take_start_time < self.player2_last_update < self.take_end_time and not self.__superset(self.current, used_tiles_recv)):
+            if not (self.take_start_time < self.player2_last_update < (self.take_end_time + datetime.timedelta(0,0.2)) and not self.__superset(self.current, used_tiles_recv)):
                 print("UPDATING")
                 if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     print("JUST A FLIP")
@@ -673,9 +674,9 @@ class banana(object):
                     self.new_word_i = new_word_i_recv
 
                     if taken_word_recv == '0':
-                        self.status = f'Opponent took {self.player2words_list[new_word_i_recv]} from the middle'
+                        self.status = f'Opponent took {self.player2words_list[new_word_i_recv]} from the middle!'
                     else:
-                        self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}'
+                        self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}!'
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             else:
