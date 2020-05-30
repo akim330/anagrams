@@ -195,7 +195,7 @@ class banana(object):
         self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
                           'display_graphics': 0, 'send_parse': 0, 'update_players': 0}
 
-        self.last_type = time.time()
+        self.last_type = time.time() - 1
 
         self.same_root_word = ''
 
