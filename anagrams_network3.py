@@ -227,6 +227,7 @@ class banana(object):
     @staticmethod
     def parse_data(data):
         try:
+            print(f"DATA TO PARSE: {data}")
             split = data.split('|')
             net_id = ast.literal_eval(split[0])
             seed_recv = ast.literal_eval(split[1])
@@ -552,6 +553,7 @@ class banana(object):
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         if self.mode != 'solo':
             if self.host and not self.seed_set:
+                print(f"I AM THE HOST!!!")
                 self.seed = random.randint(1, 100000)
                 self.seed_set = True
 
