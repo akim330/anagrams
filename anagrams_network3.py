@@ -214,6 +214,7 @@ class banana(object):
             start_time = time.time()
         print(f"NET ID: {self.net.id}")
         data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles)
+        print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
 
         if time_check:
