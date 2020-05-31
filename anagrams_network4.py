@@ -14,6 +14,10 @@ from pygame.locals import *
 
 print_check = True
 time_check = False
+no_prefix_suffix = True
+
+not_allowed_prefixes = ['UN', 'RE']
+not_allowed_suffixes = ['S', 'ED', 'D', 'ES', 'ER', 'OR', 'ING', 'EST', 'IEST', 'LY', 'TION', 'SION']
 
 FPS = 30
 WINDOWWIDTH = 640
@@ -30,6 +34,9 @@ BGCOLOR = WHITE
 TEXTCOLOR = BLACK
 
 print_check = False
+
+flip_delay = 1000 # Delay before flip in ms
+flip_status = ''
 
 letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 letter_freq = {'A': 13, 'B': 3, 'C': 3, 'D': 6, 'E': 18, 'F': 3, 'G': 4, 'H':3, 'I':12, 'J':2, 'K':2, 'L':5, 'M':3, 'N':8, 'O':11, 'P':3, 'Q':2, 'R':9, 'S':6, 'T':9, 'U': 6, 'V':3, 'W':3, 'X':2, 'Y':3, 'Z':2}
@@ -76,7 +83,7 @@ size_words = 32
 color_words = BLACK
 x_words = 10
 y_words = y_your + y_gap_your
-x_gap_words = 100
+x_gap_words = 150
 y_gap_words = 50
 
 # 'Opponent's Words'
@@ -93,7 +100,7 @@ size_opp_words = 32
 color_opp_words = BLACK
 x_opp_words = 300
 y_opp_words = y_opp + y_gap_opp
-x_gap_opp_words = 100
+x_gap_opp_words = 150
 y_gap_opp_words = 50
 
 color_taken = BLUE
@@ -403,6 +410,19 @@ class banana(object):
             self.graphics_to_update = self.graphics_to_update + ['status', 'guess']
             return None
 
+        # If no prefixes and suffixes, check that
+        if no_prefix_suffix:
+            has_prefix_suffix, prefix, suffix = api.get_prefix_suffix(candidate)
+            print(f"Stuff: {has_prefix_suffix}, {prefix}, {suffix}")
+            print(f"{prefix in not_allowed_prefixes}, {suffix in not_allowed_suffixes}")
+            if has_prefix_suffix and (prefix in not_allowed_prefixes or suffix in not_allowed_suffixes):
+                self.previous_guess = self.guess
+                self.status = "Prefix / suffix not allowed!"
+                self.guess = ''
+                self.graphics_to_update = self.graphics_to_update + ['status', 'guess']
+                return None
+
+
         error_trivial_extension = False
         error_tiles = False
 
@@ -606,6 +626,8 @@ class banana(object):
         if time_check:
             start_time = time.time()
 
+        flip_waiting_recv = False
+
         # Send network stuff, outputs of this function are the stuff you receive from the other player
         if self.mode != 'solo':
             if self.host and not self.seed_set:
@@ -668,23 +690,23 @@ class banana(object):
         if time_check:
             start_time = time.time()
 
+        if not self.flip_waiting and flip_waiting_recv:
+            self.flip_waiting = True
+            self.flip_status = 'Ready...'
+            self.graphics_to_update = self.graphics_to_update + ['flip']
+            self.last_update = self.player2_last_update
+
         # Check if other player has made a more recent update, meaning you would need to update your lists
 
         if self.player2_last_update > self.last_update:
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not (self.take_start_time < self.player2_last_update < (self.take_end_time + datetime.timedelta(0,0.2)) and not self.__superset(self.current, used_tiles_recv)):
                 # print("UPDATING")
-                if not self.flip_waiting and flip_waiting_recv:
-                    self.flip_waiting = True
-                    self.flip_status = 'Ready...'
-                    self.graphics_to_update = self.graphics_to_update + ['flip']
-                    self.last_update = self.player2_last_update
-
-                elif self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
+                if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
                     self.current = self.player2current
                     self.last_update = self.player2_last_update
-                    self.flip_status = 'Flipped!'
+                    self.flip_status = ''
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess', 'flip']
 
@@ -861,10 +883,10 @@ def main():
         DISPLAYSURF.fill(BGCOLOR)
 
         if game.flip_waiting:
-            print("Check if time to flip!")
-            if pygame.time.get_ticks() - game.time_flip > 1000:
+            if pygame.time.get_ticks() - game.time_flip > flip_delay:
+
                 game.flip()
-                game.flip_status = 'Flipped!'
+                game.flip_status = ''
                 game.graphics_to_update = game.graphics_to_update + ['flip']
                 game.flip_waiting = False
 
@@ -905,15 +927,13 @@ def main():
                     # Don't do anything if input is a space
                     pass
 
-
-
                 elif event.key == K_RETURN:
                     # if Return and no guess is present, then flip next tile. If guess is present, see if it's a take
                     if game.guess == '':
                         game.flip_waiting = True
                         game.flip_status = 'Ready...'
                         game.graphics_to_update = game.graphics_to_update + ['flip']
-                        game.last_update = datetime.datetime.now()
+                        # game.last_update = datetime.datetime.now()
                         game.time_flip = pygame.time.get_ticks()
 
                     else:
@@ -924,8 +944,6 @@ def main():
                     game.guess = game.guess + event.unicode.upper()
                     game.graphics_to_update = game.graphics_to_update + ['guess']
                     game.last_type = time.time()
-
-
 
         game.printstatus()
 

@@ -16,7 +16,10 @@ def subtract(word1, word2):
 
     list1 = list(word1)
     for letter in word2:
-        list1.remove(letter)
+        try:
+            list1.remove(letter)
+        except ValueError:
+            pass
 
     # Turn list into string
     str = ''
