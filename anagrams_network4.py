@@ -703,7 +703,7 @@ class banana(object):
             print(f"My take start time: {self.take_start_time}")
             print(f"My take end time: {self.take_end_time}")
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
-            if not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,0.5)) and not self.__superset(self.current, used_tiles_recv)):
+            if not ((self.take_start_time < self.player2_last_update < self.take_end_time) and not self.__superset(self.current, used_tiles_recv)):
                 # print("UPDATING")
                 if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
@@ -737,6 +737,7 @@ class banana(object):
 
                     self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             else:
+                print("NO GO!")
                 self.last_update = datetime.datetime.now()
 
         if time_check:
