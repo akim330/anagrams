@@ -699,7 +699,7 @@ class banana(object):
 
         if self.player2_last_update > self.last_update:
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
-            if not (self.take_start_time < self.player2_last_update < (self.take_end_time + datetime.timedelta(0,0.5) and not self.__superset(self.current, used_tiles_recv))):
+            if not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,0.5)) and not self.__superset(self.current, used_tiles_recv)):
                 # print("UPDATING")
                 if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
