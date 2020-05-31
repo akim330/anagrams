@@ -739,7 +739,7 @@ class banana(object):
                 # print("JUST A FLIP")
                 # print("Secondhand flip")
                 self.current = self.player2current
-                # self.last_update = self.player2_last_update
+                self.last_update = self.player2_last_update
                 self.flip_status = ''
 
                 self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess', 'flip']
