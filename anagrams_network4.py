@@ -380,6 +380,29 @@ class banana(object):
 
                 # If all of those check out, then it's a steal and record which word is being stolen
 
+    def __can_take(self, candidate):
+        word_list = self.player2words_list
+
+        for word in word_list:
+            # First, check if candidate is a superset of the current word
+            if self.__superset(candidate, word, strict=True):
+
+                # Then, check if the tiles needed to make candidate are in the middle
+                if self.__superset(self.current, self.__subtract(candidate, word)):
+                    return True
+
+        word_list = self.playerwords_list
+
+        for word in word_list:
+            if self.__superset(candidate, word, strict=True):
+
+                # Then, check if the tiles needed to make candidate are in the middle
+                if self.__superset(self.current, self.__subtract(candidate, word)):
+                    return True
+        if self.__superset(self.current, candidate, strict=False):
+            return True
+        else:
+            return False
 
     def take(self, candidate):
         self.used_tiles = []
@@ -707,43 +730,46 @@ class banana(object):
             print(f"Current: {self.current}")
             print(f"Tiles used from opponent: {used_tiles_recv}")
             print(f"Tiles used by me: {self.used_tiles}")
+
+            opp_take_possible = self.__superset(self.current, used_tiles_recv) and self.__can_take(taken_word_recv)
+
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
-            if not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,1)) and any(x in self.used_tiles for x in used_tiles_recv)):
+            # if not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,1)) and any(x in self.used_tiles for x in used_tiles_recv)):
+            if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
+                # print("JUST A FLIP")
+                # print("Secondhand flip")
+                self.current = self.player2current
+                self.last_update = self.player2_last_update
+                self.flip_status = ''
+
+                self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess', 'flip']
+                try:
+                    last = self.tiles.pop()
+                except IndexError:
+                    self.status = 'No tiles left!'
+                self.flip_waiting = False
+            elif opp_take_possible:
                 print("UPDATING")
-                if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
-                    # print("JUST A FLIP")
-                    # print("Secondhand flip")
-                    self.current = self.player2current
-                    self.last_update = self.player2_last_update
-                    self.flip_status = ''
-
-                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'guess', 'flip']
-                    try:
-                        last = self.tiles.pop()
-                    except IndexError:
-                        self.status = 'No tiles left!'
-                    self.flip_waiting = False
-                else:
                     # print("A TAKE!")
-                    self.current = self.player2current
-                    self.playerwords = playerwords_recv
-                    self.playerwords_list = playerwords_list_recv
-                    self.last_update = self.player2_last_update
-                    self.player2words = player2words_recv
-                    self.player2words_list = player2words_list_recv
+                self.current = self.player2current
+                self.playerwords = playerwords_recv
+                self.playerwords_list = playerwords_list_recv
+                self.last_update = self.player2_last_update
+                self.player2words = player2words_recv
+                self.player2words_list = player2words_list_recv
 
-                    self.who_took = 'opp'
-                    self.new_word_i = new_word_i_recv
+                self.who_took = 'opp'
+                self.new_word_i = new_word_i_recv
 
-                    if taken_word_recv == '0':
-                        self.status = f'Opponent took {self.player2words_list[new_word_i_recv]} from the middle!'
-                    else:
-                        self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}!'
+                if taken_word_recv == '0':
+                    self.status = f'Opponent took {self.player2words_list[new_word_i_recv]} from the middle!'
+                else:
+                    self.status = f'Opponent took {taken_word_recv} with {self.player2words_list[new_word_i_recv]}!'
 
-                    self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
+                self.graphics_to_update = self.graphics_to_update + ['tiles', 'playerwords', 'player2words', 'status', 'guess']
             else:
                 print("NO GO!")
-                self.last_update = self.take_end_time + datetime.timedelta(0,0.5)
+                self.last_update = datetime.datetime.now()
 
         if time_check:
             end_time = time.time()
