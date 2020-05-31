@@ -678,6 +678,7 @@ class banana(object):
                     self.flip_waiting = True
                     self.flip_status = 'Ready...'
                     self.graphics_to_update = self.graphics_to_update + ['flip']
+                    self.last_update = self.player2_last_update
 
                 elif self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
@@ -912,6 +913,7 @@ def main():
                         game.flip_waiting = True
                         game.flip_status = 'Ready...'
                         game.graphics_to_update = game.graphics_to_update + ['flip']
+                        game.last_update = datetime.datetime.now()
                         game.time_flip = pygame.time.get_ticks()
 
                     else:
