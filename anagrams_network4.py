@@ -703,9 +703,10 @@ class banana(object):
             print(f"My take start time: {self.take_start_time}")
             print(f"My take end time: {self.take_end_time}")
             print(f"First check: {self.take_start_time < self.player2_last_update < self.take_end_time}")
-            print(f"Second check: {not self.__superset(self.current, used_tiles_recv)}")
+            print(f"Second check: {any(x in self.used_tiles for x in used_tiles_recv)}")
             print(f"Current: {self.current}")
             print(f"Tiles used from opponent: {used_tiles_recv}")
+            print(f"Tiles used by me: {self.used_tiles}")
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not ((self.take_start_time < self.player2_last_update < self.take_end_time) and any(x in self.used_tiles for x in used_tiles_recv)):
                 print("UPDATING")
