@@ -242,7 +242,7 @@ class banana(object):
         if time_check:
             start_time = time.time()
         # print(f"NET ID: {self.net.id}")
-        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + self.taken_word + "|" + str(self.flip_waiting)
+        data = str(self.net.id) + "|" + str(self.seed) + "|" + str(self.current) + "|" + str(self.playerwords) + "|" + str(self.playerwords_list) + "|" + str(self.player2words) + "|" + str(self.player2words_list) + "|" + str(self.last_update) + "|" + str(self.used_tiles) + "|" + str(self.new_word_i) + "|" + self.taken_word + "|" + str(self.flip_waiting) + "|" + str(self.take_start_time)
         # print(f"DATA TO SEND: {data}")
         reply = self.net.send(data)
         # print(f"DATA RECEIVED: {reply}")
@@ -271,10 +271,11 @@ class banana(object):
             new_word_i_recv = ast.literal_eval(split[9])
             taken_word_recv = split[10]
             flip_waiting_recv = ast.literal_eval(split[11])
+            take_start_recv = try_parsing_date(split[12])
 
-            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, new_word_i_recv, taken_word_recv, flip_waiting_recv
+            return net_id, seed_recv, current, player2words, player2words_list, playerwords, playerwords_list, last_update, used_tiles_recv, new_word_i_recv, taken_word_recv, flip_waiting_recv, take_start_recv
         except:
-            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1, '', False
+            return -1, 0, None, {}, [], None, None, datetime.datetime(1, 1, 1, 0, 0), [], -1, '', False, datetime.datetime(1, 1, 1, 0, 0)
 
 
 
@@ -659,7 +660,7 @@ class banana(object):
                 self.seed_set = True
 
             if time.time() - self.last_type > 0.5:
-                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, new_word_i_recv, taken_word_recv, flip_waiting_recv = self.parse_data(self.send_data())
+                net_id_recv, seed_recv, self.player2current, player2words_recv, player2words_list_recv, playerwords_recv, playerwords_list_recv, self.player2_last_update, used_tiles_recv, new_word_i_recv, taken_word_recv, flip_waiting_recv, take_start_recv = self.parse_data(self.send_data())
                 # print(f"Net ID received: {net_id_recv}")
                 if seed_recv < 1:
                     print("No data...")
@@ -748,13 +749,13 @@ class banana(object):
                 except IndexError:
                     self.status = 'No tiles left!'
                 self.flip_waiting = False
-            elif not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,1)) and not opp_take_possible):
+            elif not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,1)) and not opp_take_possible) or take_start_recv < self.take_start_time:
                 print("UPDATING")
                     # print("A TAKE!")
                 self.current = self.player2current
                 self.playerwords = playerwords_recv
                 self.playerwords_list = playerwords_list_recv
-                # self.last_update = self.player2_last_update
+                self.last_update = self.player2_last_update
                 self.player2words = player2words_recv
                 self.player2words_list = player2words_list_recv
 
