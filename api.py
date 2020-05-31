@@ -35,11 +35,15 @@ def get_etym(word):
     data = get_word_data(word)
     try:
         etym_string = data['et'][0][1]
-        pattern = '{it}(.*?){/it}'
-        etym_list_commas = re.findall(pattern, etym_string)
+        pattern1 = '{it}(.*?){/it}'
+        etym_list_commas = re.findall(pattern1, etym_string)
         etym_list_split = []
         for string in etym_list_commas:
             etym_list_split = etym_list_split + string.split(', ')
+
+        if 'literally,' in etym_string:
+            etym_list_split.append(word)
+
         return etym_list_split
 
     except (TypeError, KeyError):
