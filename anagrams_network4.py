@@ -51,7 +51,7 @@ font_flip = 'freesansbold.ttf'
 size_flip = 20
 color_flip = BLACK
 x_flip = 20
-y_flip = 40
+y_flip = 60
 
 # Tiles
 font_tile = 'freesansbold.ttf'
@@ -229,7 +229,7 @@ class banana(object):
         self.new_word_i = -1
 
         self.flip_waiting = False
-        self.time_flip = time.time()
+        self.time_flip = pygame.time.get_ticks()
 
     def send_data(self):
         if time_check:
@@ -859,6 +859,14 @@ def main():
 
         DISPLAYSURF.fill(BGCOLOR)
 
+        if game.flip_waiting:
+            print("Check if time to flip!")
+            if pygame.time.get_ticks() - game.time_flip > 1000:
+                game.flip()
+                game.flip_status = 'Flipped!'
+                game.graphics_to_update = game.graphics_to_update + ['flip']
+                game.flip_waiting = False
+
         for event in pygame.event.get():
 
             if event.type == QUIT:
@@ -872,13 +880,6 @@ def main():
             elif not game.tiles and datetime.datetime.now() - game.last_update > datetime.timedelta(seconds=3):
                 game.status = f"No more tiles! Your score: {sum([len(i) for i in game.playerwords_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
                 game.graphics_to_update = game.graphics_to_update + ['status']
-
-            elif game.flip_waiting:
-                if time.time() - game.time_flip > 1:
-                    game.flip()
-                    game.flip_status = 'Flipped!'
-                    game.graphics_to_update = game.graphics_to_update + ['flip']
-                    game.flip_waiting = False
 
             elif game.mode == 'waiting':
                 if event.type == KEYDOWN and event.key == K_RETURN:
@@ -911,7 +912,7 @@ def main():
                         game.flip_waiting = True
                         game.flip_status = 'Ready...'
                         game.graphics_to_update = game.graphics_to_update + ['flip']
-                        game.time_flip = time.time()
+                        game.time_flip = pygame.time.get_ticks()
 
                     else:
                         game.take(game.guess.upper())
