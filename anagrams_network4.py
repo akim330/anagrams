@@ -691,7 +691,6 @@ class banana(object):
             start_time = time.time()
 
         if not self.flip_waiting and flip_waiting_recv:
-            self.flip_waiting = True
             self.flip_status = 'Ready...'
             self.graphics_to_update = self.graphics_to_update + ['flip']
             self.last_update = self.player2_last_update
@@ -704,6 +703,7 @@ class banana(object):
                 # print("UPDATING")
                 if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
+                    print("Secondhand flip")
                     self.current = self.player2current
                     self.last_update = self.player2_last_update
                     self.flip_status = ''
@@ -884,6 +884,7 @@ def main():
 
         if game.flip_waiting:
             if pygame.time.get_ticks() - game.time_flip > flip_delay:
+                print("Firsthand flip")
 
                 game.flip()
                 game.flip_status = ''
