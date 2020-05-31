@@ -18,7 +18,7 @@ def longestSubstringFinder(string1, string2):
                 if (len(match) > len(answer)): answer = match
                 match = ""
     end_time = time.time()
-    print(f"{end_time - start_time}")
+    # print(f"{end_time - start_time}")
     return answer
 
 def get_word_data(word):
@@ -61,7 +61,7 @@ def get_prefix_suffix(word):
             else:
                 return False, None, None
         except ValueError:
-            print("Couldn't get data")
+            # print("Couldn't get data")
             return False, None, None
 
     except TypeError:

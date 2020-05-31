@@ -413,8 +413,8 @@ class banana(object):
         # If no prefixes and suffixes, check that
         if no_prefix_suffix:
             has_prefix_suffix, prefix, suffix = api.get_prefix_suffix(candidate)
-            print(f"Stuff: {has_prefix_suffix}, {prefix}, {suffix}")
-            print(f"{prefix in not_allowed_prefixes}, {suffix in not_allowed_suffixes}")
+            # print(f"Stuff: {has_prefix_suffix}, {prefix}, {suffix}")
+            # print(f"{prefix in not_allowed_prefixes}, {suffix in not_allowed_suffixes}")
             if has_prefix_suffix and (prefix in not_allowed_prefixes or suffix in not_allowed_suffixes):
                 self.previous_guess = self.guess
                 self.status = "Prefix / suffix not allowed!"
@@ -698,12 +698,16 @@ class banana(object):
         # Check if other player has made a more recent update, meaning you would need to update your lists
 
         if self.player2_last_update > self.last_update:
+            print(f"Opponent's last update: {self.player2_last_update}")
+            print(f"My last update: {self.last_update}")
+            print(f"My take start time: {self.take_start_time}")
+            print(f"My take end time: {self.take_end_time}")
             # print(f"take_start_time: {self.take_start_time}, player 2 last update: {self.player2_last_update}, take end time: {self.take_end_time}, current: {self.current}, used_tiles_recv: {used_tiles_recv}")
             if not ((self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,0.5)) and not self.__superset(self.current, used_tiles_recv)):
                 # print("UPDATING")
                 if self.player2words_list == player2words_list_recv and self.playerwords_list == playerwords_list_recv:
                     # print("JUST A FLIP")
-                    print("Secondhand flip")
+                    # print("Secondhand flip")
                     self.current = self.player2current
                     self.last_update = self.player2_last_update
                     self.flip_status = ''
@@ -886,7 +890,7 @@ def main():
 
         if game.flip_waiting:
             if pygame.time.get_ticks() - game.time_flip > flip_delay:
-                print("Firsthand flip")
+                # print("Firsthand flip")
 
                 game.flip()
                 game.flip_status = ''
