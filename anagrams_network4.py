@@ -748,7 +748,7 @@ class banana(object):
                 except IndexError:
                     self.status = 'No tiles left!'
                 self.flip_waiting = False
-            elif opp_take_possible:
+            elif not (self.take_start_time < self.player2_last_update < self.take_end_time + datetime.timedelta(0,1)) and opp_take_possible:
                 print("UPDATING")
                     # print("A TAKE!")
                 self.current = self.player2current
