@@ -22,7 +22,7 @@ s.listen(2)
 print("Waiting for a connection")
 
 currentId = "0"
-data_all = ["0|0|0|{}|{}", "1|0|0|{}|{}"]
+data_all = ["0|0|0|{\'new_word\': \'\', \'etyms_new_word\': \'\', \'take_time\': 0, \'used_tiles\': [], \'self_taken_words\': [], \'opp_taken_words\': [],\'self_taken_is\':[], \'opp_taken_is\':[]}|{\'flip_status\': \'\', \'flip_waiting\': False,\'scheduled_flip\': 0}", "1|0|0|{\'new_word\': \'\', \'etyms_new_word\': \'\', \'take_time\': 0,\'used_tiles\': [], \'self_taken_words\': [], \'opp_taken_words\': [],\'self_taken_is\':[], \'opp_taken_is\':[]}|{\'flip_status\': \'\', \'flip_waiting\': False,\'scheduled_flip\': 0}"]
 def threaded_client(conn):
     global currentId, pos
     conn.send(str.encode(currentId))

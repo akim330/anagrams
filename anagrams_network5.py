@@ -36,8 +36,6 @@ BLUE = (0, 0, 255)
 BGCOLOR = WHITE
 TEXTCOLOR = BLACK
 
-print_check = False
-
 flip_delay = 1000 # Delay before flip in ms
 flip_status = ''
 
@@ -158,8 +156,6 @@ class banana(object):
         #  BANANA  #
         # -------- #
 
-        self.flip_dict = {'flip_status': '', 'flip_waiting': False, 'time_flip': pygame.time.get_ticks(),
-                                'scheduled_flip': 0}
 
         self.take_dict = {'new_word': '', 'etyms_new_word': '', 'take_time': 0,
                           'used_tiles': [], 'self_taken_words': [], 'opp_taken_words': [],
@@ -168,6 +164,10 @@ class banana(object):
         self.take_dict_past = {'new_word': '', 'etyms_new_word': '', 'take_time': 0,
                           'used_tiles': [], 'self_taken_words': [], 'opp_taken_words': [],
                           'self_taken_is':[], 'opp_taken_is':[]}
+
+        self.flip_dict = {'flip_status': '', 'flip_waiting': False,
+                                'scheduled_flip': 0}
+
 
         # Game state
         self.tiles = []
@@ -1015,7 +1015,6 @@ def main():
                         game.flip_dict['flip_status'] = 'Ready...'
                         game.graphics_to_update = game.graphics_to_update + ['flip']
                         game.last_update = time.time()
-                        game.flip_dict['time_flip'] = pygame.time.get_ticks()
                         game.flip_dict['scheduled_flip'] = time.time() + 1
 
                     else:
