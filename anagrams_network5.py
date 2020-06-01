@@ -184,6 +184,7 @@ class banana(object):
         self.mode = 'waiting'
         self.frozen = False
         self.take_waiting = False
+        self.i_flipped = False
 
         # Previous game state
         self.tiles_past = []
@@ -746,7 +747,7 @@ class banana(object):
         flip_waiting_recv = False
 
         if time_check:
-            start_time = time.time()
+            start_time =  time.time()
 
         if time.time() - self.last_type > 0.2:
             # Get player 2 update
@@ -1029,6 +1030,7 @@ def main():
                             game.graphics_to_update = game.graphics_to_update + ['flip']
                             game.last_update = time.time()
                             game.flip_dict['scheduled_flip'] = time.time() + 1
+                            game.i_flipped = True
 
                             print("Firsthand flip")
                             print(f"Current time is {time.time()}")
@@ -1047,6 +1049,11 @@ def main():
 
         if game.mode != 'solo':
             game.get_server_update()
+
+        if game.i_flipped and game.flip_dict['flip_waiting']:
+            game.flip_dict['flip_waiting'] = False
+            game.i_flipped = False
+            
         game.update_graphics()
         game.printstatus()
         pygame.display.update()
