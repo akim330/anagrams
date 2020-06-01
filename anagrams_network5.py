@@ -548,6 +548,10 @@ class banana(object):
             self.player2words_past = self.player2words.copy()
             self.player2words_list_past = self.player2words_list.copy()
 
+        if self.mode == 'solo':
+            self.update_take('self', self.take_dict)
+
+
         self.guess = ''
         if time_check:
             end_time = time.time()
@@ -918,22 +922,23 @@ class banana(object):
         # GUESS
         self.__display_text(self.guessSurfObj, x_guess, y_guess)
 
-        # 'OPPONENT'S'
-        self.__display_text(self.oppSurfObj, x_opp, y_opp)
+        if self.mode != 'solo':
+            # 'OPPONENT'S'
+            self.__display_text(self.oppSurfObj, x_opp, y_opp)
 
-        # OPPONENT'S WORDS
+            # OPPONENT'S WORDS
 
-        x_opp_words_local = x_opp_words
-        y_opp_words_local = y_opp_words
+            x_opp_words_local = x_opp_words
+            y_opp_words_local = y_opp_words
 
-        for i, word in enumerate(self.player2wordsSurfObj_list):
-            self.__display_text(word, x_opp_words_local, y_opp_words_local)
+            for i, word in enumerate(self.player2wordsSurfObj_list):
+                self.__display_text(word, x_opp_words_local, y_opp_words_local)
 
-            if i % 10 == 9:
-                x_opp_words_local = x_opp_words_local + x_gap_opp_words
-                y_opp_words_local = y_opp_words - self.y_gap_opp_words
+                if i % 10 == 9:
+                    x_opp_words_local = x_opp_words_local + x_gap_opp_words
+                    y_opp_words_local = y_opp_words - self.y_gap_opp_words
 
-            y_opp_words_local = y_opp_words_local + self.y_gap_opp_words
+                y_opp_words_local = y_opp_words_local + self.y_gap_opp_words
 
         # FLIP STATUS
         self.__display_text(self.flipSurfObj, x_flip, y_flip)
@@ -965,7 +970,7 @@ def main():
 
         DISPLAYSURF.fill(BGCOLOR)
 
-        if game.flip_waiting:
+        if game.flip_dict['flip_waiting']:
             if time.time() >= game.flip_dict['scheduled_flip']:
                 # print("Firsthand flip")
                 game.flip()
@@ -1011,11 +1016,14 @@ def main():
                 elif event.key == K_RETURN:
                     # if Return and no guess is present, then flip next tile. If guess is present, see if it's a take
                     if game.guess == '':
-                        game.flip_dict['flip_waiting'] = True
-                        game.flip_dict['flip_status'] = 'Ready...'
-                        game.graphics_to_update = game.graphics_to_update + ['flip']
-                        game.last_update = time.time()
-                        game.flip_dict['scheduled_flip'] = time.time() + 1
+                        if game.mode != 'solo':
+                            game.flip_dict['flip_waiting'] = True
+                            game.flip_dict['flip_status'] = 'Ready...'
+                            game.graphics_to_update = game.graphics_to_update + ['flip']
+                            game.last_update = time.time()
+                            game.flip_dict['scheduled_flip'] = time.time() + 1
+                        else:
+                            game.flip()
 
                     else:
                         game.take(game.guess.upper())
