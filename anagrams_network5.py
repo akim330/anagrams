@@ -791,7 +791,7 @@ class banana(object):
                 self.flip_dict['flip_waiting'] = False
 
             self.graphics_to_update = self.graphics_to_update + ['flip']
-            self.last_update = last_update_recv
+            self.last_update = self.last_update_recv
 
         if self.take_waiting and time.time() - self.take_waiting_time > 0.5:
             self.update_take('self', self.take_dict)
