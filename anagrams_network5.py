@@ -750,7 +750,9 @@ class banana(object):
 
         if time.time() - self.last_type > 0.2:
             # Get player 2 update
+            print("Getting player 2 update!")
             net_id_recv, self.seed_recv, last_update_recv, take_dict_recv, flip_dict_recv = self.parse_data(self.send_data())
+            print(f"Flip dict: {flip_dict_recv}")
 
             if self.seed_recv < 1:
                 print("No data...")
@@ -773,6 +775,7 @@ class banana(object):
             start_time = time.time()
 
         if not self.flip_dict['flip_waiting'] and flip_dict_recv['flip_waiting']:
+            self.flip_dict['flip_waiting'] = True
             self.flip_dict['flip_status'] = 'Ready...'
             self.flip_dict['scheduled_flip'] = flip_dict_recv['scheduled_flip']
             # if the scheduled flip time has already passed, there's a snafu, so flip
