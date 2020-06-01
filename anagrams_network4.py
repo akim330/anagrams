@@ -19,6 +19,8 @@ no_prefix_suffix = True
 not_allowed_prefixes = ['UN', 'RE']
 not_allowed_suffixes = ['S', 'ED', 'D', 'ES', 'ER', 'R', 'OR', 'ING', 'EST', 'IEST', 'LY', 'TION', 'SION']
 
+word_add_twl = ['acai', 'roo', 'tix']
+
 FPS = 30
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 640
@@ -423,7 +425,8 @@ class banana(object):
 
         # Then check if a word
         if len(candidate) < 10:
-            is_word = twl.check(candidate.lower())
+            candidate_lower = candidate.lower()
+            is_word = twl.check(candidate_lower) or candidate_lower in word_add_twl
         else:
             is_word = api.get_word_data(candidate)
         if not is_word:
