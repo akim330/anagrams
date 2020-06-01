@@ -776,9 +776,13 @@ class banana(object):
             self.flip_dict['flip_status'] = 'Ready...'
             self.flip_dict['scheduled_flip'] = flip_dict_recv['scheduled_flip']
             # if the scheduled flip time has already passed, there's a snafu, so flip
+            print("Secondhand flip")
+            print(f"Current time is {time.time()}")
+            print(f"Gonna flip at {self.flip_dict['scheduled_flip']}")
             if time.time() > self.flip_dict['scheduled_flip']:
                 print("OOPS! Already flipped!!!")
                 self.flip()
+                self.flip_dict['flip_waiting'] = False
 
             self.graphics_to_update = self.graphics_to_update + ['flip']
             self.last_update = last_update_recv
@@ -1022,6 +1026,10 @@ def main():
                             game.graphics_to_update = game.graphics_to_update + ['flip']
                             game.last_update = time.time()
                             game.flip_dict['scheduled_flip'] = time.time() + 1
+
+                            print("Firsthand flip")
+                            print(f"Current time is {time.time()}")
+                            print(f"Gonna flip at {game.flip_dict['scheduled_flip']}")
                         else:
                             game.flip()
 
