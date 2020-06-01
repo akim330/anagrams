@@ -752,8 +752,8 @@ class banana(object):
         if time.time() - self.last_type > 0.2:
             # Get player 2 update
             print("Getting player 2 update!")
-            net_id_recv, self.seed_recv, last_update_recv, take_dict_recv, flip_dict_recv = self.parse_data(self.send_data())
-            print(f"Flip dict: {flip_dict_recv}")
+            net_id_recv, self.seed_recv, self.last_update_recv, self.take_dict_recv, self.flip_dict_recv = self.parse_data(self.send_data())
+            print(f"Flip dict: {self.flip_dict_recv}")
 
             if self.seed_recv < 1:
                 print("No data...")
@@ -768,6 +768,8 @@ class banana(object):
             else:
                 self.frozen = False
 
+        take_dict_recv = self.take_dict_recv
+
         if time_check:
             end_time = time.time()
             self.time_dict['send_parse'] = end_time - start_time
@@ -775,10 +777,10 @@ class banana(object):
         if time_check:
             start_time = time.time()
 
-        if not self.flip_dict['flip_waiting'] and flip_dict_recv['flip_waiting']:
+        if not self.i_flipped and not self.flip_dict['flip_waiting'] and self.flip_dict_recv['flip_waiting']:
             self.flip_dict['flip_waiting'] = True
             self.flip_dict['flip_status'] = 'Ready...'
-            self.flip_dict['scheduled_flip'] = flip_dict_recv['scheduled_flip']
+            self.flip_dict['scheduled_flip'] = self.flip_dict_recv['scheduled_flip']
             # if the scheduled flip time has already passed, there's a snafu, so flip
             print("Secondhand flip")
             print(f"Current time is {time.time()}")
@@ -800,7 +802,7 @@ class banana(object):
         # Check if other player has made a more recent update, meaning you would need to update your lists
         # Don't check for flips (because they are timed and independently done). Only check for takes
         # So in theory, the following should be triggered only if there's a take or a counter-update!
-        if self.player2_last_update > self.last_update and not self.__is_cleared(take_dict_recv):
+        if self.last_update_recv > self.last_update and not self.__is_cleared(self.take_dict_recv):
             if print_check:
                 """
                 print(f"Opponent's last update: {self.player2_last_update}")
@@ -1053,7 +1055,7 @@ def main():
         if game.i_flipped and game.flip_dict['flip_waiting']:
             game.flip_dict['flip_waiting'] = False
             game.i_flipped = False
-            
+
         game.update_graphics()
         game.printstatus()
         pygame.display.update()
