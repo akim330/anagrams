@@ -10,18 +10,14 @@ class Network:
         self.port = 5555
         self.addr = (self.host, self.port)
         print("Network: gonna connect")
-        self.id = int(self.connect())
-        print("Network: finished!")
+        self.id = self.connect()
 
     def connect(self):
         self.client.connect(self.addr)
-        print("Network: connected!")
         return self.client.recv(2048).decode()
 
-    def get_id(self):
-        return self.id
-
-
+    def get_dict(self):
+        return self.recv_dict
 
     def send(self, data):
         """
@@ -29,8 +25,9 @@ class Network:
         :return: str
         """
         try:
-            self.client.send(pickle.dumps(data))
-            return pickle.loads(self.client.recv(2048))
-        except:
-            print("Error!")
-            return None
+            self.client.send(str.encode(data))
+            reply = self.client.recv(2048).decode()
+            return reply
+        except socket.error as e:
+            print("There's been an error sending the data!!")
+            return str(e)

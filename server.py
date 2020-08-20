@@ -7,7 +7,7 @@ print_check = True
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server = '192.168.1.8'
+server = '192.168.1.3'
 port = 5555
 
 server_ip = socket.gethostbyname(server)
@@ -60,7 +60,7 @@ def threaded_client(conn):
     conn.close()
 
 while True:
-    conn, addr = s.accept()
+    conn, addr = s.accept() # this gets the client socket object
     print("Connected to: ", addr)
     print(f"conn: {conn}")
 

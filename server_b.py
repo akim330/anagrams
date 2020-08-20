@@ -2,8 +2,9 @@ import socket
 from _thread import *
 import sys
 import datetime
+import banana_server
 
-print_check = True
+print_check = False
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -22,7 +23,8 @@ s.listen(2)
 print("Waiting for a connection")
 
 currentId = "0"
-data_all = ["0|0|{}|{}|{}", "1|0|{}|{}|{}"]
+data_all = ["0|0|0|{\'new_word\': \'\', \'etyms_new_word\': \'\', \'take_time\': 0, \'used_tiles\': [], \'self_taken_words\': [], \'opp_taken_words\': [],\'self_taken_is\':[], \'opp_taken_is\':[]}|{\'flip_status\': \'\', \'flip_waiting\': False,\'scheduled_flip\': 0}", "1|0|0|{\'new_word\': \'\', \'etyms_new_word\': \'\', \'take_time\': 0,\'used_tiles\': [], \'self_taken_words\': [], \'opp_taken_words\': [],\'self_taken_is\':[], \'opp_taken_is\':[]}|{\'flip_status\': \'\', \'flip_waiting\': False,\'scheduled_flip\': 0}"]
+
 def threaded_client(conn):
     global currentId, pos
     conn.send(str.encode(currentId))
@@ -34,6 +36,7 @@ def threaded_client(conn):
         try:
             data = conn.recv(2048)
             reply = data.decode('utf-8')
+            print(f"Reply: {reply}")
             if not data:
                 conn.send(str.encode("Goodbye"))
                 break
@@ -48,7 +51,7 @@ def threaded_client(conn):
                 if id == 0: nid = 1
                 if id == 1: nid = 0
 
-                reply = data_all[nid][:]
+                reply = 'TESTING'
                 if print_check:
                     print(f"{conn.getsockname()[0]}: Current ID: {currentId}, ID: {id}" + "Sending: " + reply)
 
@@ -58,6 +61,8 @@ def threaded_client(conn):
 
     print("Connection Closed")
     conn.close()
+
+game = banana_server.banana()
 
 while True:
     conn, addr = s.accept()

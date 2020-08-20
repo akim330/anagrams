@@ -3,7 +3,7 @@ import random
 import twl
 from collections import Counter
 import time
-from network_e import Network
+from network_new import Network  # UPDATE
 import ast
 import datetime
 from itertools import combinations
@@ -253,8 +253,11 @@ class banana(object):
         self.seed_set = False
         self.seed = 0
 
+        print("Initializing network")
         # Network
         self.net = Network()
+
+        print("Finished initializing network")
 
         # For time checks
         self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
@@ -264,8 +267,10 @@ class banana(object):
 
         self.same_root_word = ''
 
+        print("gonna do first server update")
         # Perform an initial server update
         self.get_server_update()
+        print("finished first server update")
 
         # If you receive a invalid seed, there's no opponent and you should set the seed yourself
         # If you do receive a valid seed, there's already an opponent and take their seed

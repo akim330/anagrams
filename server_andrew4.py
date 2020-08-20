@@ -34,6 +34,7 @@ def threaded_client(conn):
         try:
             data = conn.recv(2048)
             reply = data.decode('utf-8')
+            print(f"Reply: {reply}")
             if not data:
                 conn.send(str.encode("Goodbye"))
                 break

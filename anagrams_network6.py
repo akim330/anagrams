@@ -298,7 +298,6 @@ class banana(object):
     @staticmethod
     def parse_data(data):
         try:
-            # print(f"DATA TO PARSE: {data}")
             split = data.split('|')
             net_id = ast.literal_eval(split[0])
             seed_recv = ast.literal_eval(split[1])
@@ -308,7 +307,7 @@ class banana(object):
 
             return net_id, seed_recv, last_update_recv, take_dict_recv, flip_timer_dict_recv
         except:
-            return -1, 0, {}, {}, {}
+            return -1, 0, 0, {}, {'flip_waiting': False}
 
     def flip(self):
         if not self.tiles:
@@ -776,6 +775,8 @@ class banana(object):
 
         if time_check:
             start_time = time.time()
+
+        print(f"{self.flip_dict['flip_waiting']}")
 
         if not self.i_flipped and not self.flip_dict['flip_waiting'] and self.flip_dict_recv['flip_waiting']:
             self.flip_dict['flip_waiting'] = True
