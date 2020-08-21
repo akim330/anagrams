@@ -52,7 +52,7 @@ def threaded_client(conn, player):
     print(f"{conn.getsockname()[0]}: Current ID: {currentId}")
     reply = ''
     while True:
-        
+
         if not game.tiles:
             game.game_over = True
 
