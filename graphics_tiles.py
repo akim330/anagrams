@@ -6,6 +6,7 @@ BLACK = (0, 0, 0)
 NAVYBLUE = (60, 60, 100)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+GRAY = (230, 230, 230)
 
 BGCOLOR = WHITE
 TEXTCOLOR = BLACK
@@ -22,6 +23,8 @@ class Graphics:
         #  --------
 
         self.first_time = True
+
+        self.gap_factor = 1.5
 
 
         # 'Current'
@@ -53,13 +56,13 @@ class Graphics:
                      'color': BLACK,
                      'x': 10,
                      'y': 100,
-                     'y_gap': 50}
+                     'y_gap': 70}
 
         # Your Words
         self.self_words = {'font': 'freesansbold.ttf',
-                     'size': 32,
+                     'size': 48,
                      'color': BLACK,
-                     'x': 10,
+                     'x': 30,
                      'y': self.your['y'] + self.your['y_gap'],
                      'x_gap': 150,
                      'y_gap': 50}
@@ -70,14 +73,14 @@ class Graphics:
                     'color': BLACK,
                     'x': 300,
                     'y': 100,
-                    'y_gap': 50}
+                    'y_gap': 70}
 
 
         # Opponent's Words
         self.opp_words = {'font': 'freesansbold.ttf',
-                          'size': 32,
+                          'size': 48,
                           'color': BLACK,
-                          'x': 300,
+                          'x': 320,
                           'y': self.opp['y'] + self.opp['y_gap'],
                           'x_gap': 150,
                           'y_gap': 50}
@@ -126,16 +129,22 @@ class Graphics:
         for letter in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']:
             self.tile_dict[letter] = pygame.image.load(letter + '.png')
 
+    def flatten(self, list):
+        flat_list = []
+        for sublist in list:
+            for item in sublist:
+                flat_list.append(item)
+        return flat_list
 
     def __numwords_to_fontsize(self, numwords):
         if numwords <= 6:
             return int(self.self_words['size'] / 1.25), int(self.self_words['y_gap'] / 1.25)
         elif 6 < numwords <= 10:
-            return int(self.self_words['size'] / 1.75), int(self.self_words['y_gap'] / 1.75)
-        elif 10 < numwords <= 20:
-            return int(self.self_words['size'] / 2), int(self.self_words['y_gap'] / 2)
-        elif 20 < numwords <= 50:
             return int(self.self_words['size'] / 3), int(self.self_words['y_gap'] / 3)
+        elif 10 < numwords <= 20:
+            return int(self.self_words['size'] / 5), int(self.self_words['y_gap'] / 5)
+        elif 20 < numwords <= 50:
+            return int(self.self_words['size'] / 8), int(self.self_words['y_gap'] / 8)
 
     def __numtiles_to_fontsize(self, numtiles):
         if numtiles <= 10:
@@ -159,6 +168,30 @@ class Graphics:
         DISPLAYSURF.blit(SurfaceObj, textRectObj)
         return textRectObj
 
+    def display_tile(self, tile, size, x, y):
+        SurfaceObj = pygame.transform.smoothscale(self.tile_dict[tile.lower()], (size, size))
+        textRectObj = SurfaceObj.get_rect()
+        textRectObj.center = (x, y)
+        DISPLAYSURF.blit(SurfaceObj, textRectObj)
+
+        return textRectObj
+
+    def display_word(self, word, size, x, y):
+        # Outputs a surface object of the word in tile images
+        textRectObj_list = []
+        current_x = x
+
+        for letter in word:
+            SurfaceObj = pygame.transform.smoothscale(self.tile_dict[letter.lower()], (size, size))
+            textRectObj = SurfaceObj.get_rect()
+            textRectObj.center = (current_x, y)
+            DISPLAYSURF.blit(SurfaceObj, textRectObj)
+
+            textRectObj_list.append(textRectObj)
+            current_x += size
+
+        return textRectObj_list
+
     def printstatus(self, game, player, graphics_to_update, guess, status, taker):
 
         rects_to_update = []
@@ -177,55 +210,12 @@ class Graphics:
         # Make the surface objects (or lists of surface objects)
 
         size_tiles, y_gap_tile, x_gap_tile = self.__numtiles_to_fontsize(len(game.current))
+        size_words, y_gap_words = self.__numwords_to_fontsize(len(self_words_list))
+        size_opp_words, y_gap_opp_words = self.__numwords_to_fontsize(len(opp_words_list))
 
         if 'flip' in graphics_to_update or 'flip_status' in graphics_to_update:
             print(f"Updating flip status to {game.flip_status}!")
             self.SurfObjs['flip'] = self.fontObjs['flip'].render(game.flip_status, True, self.flip['color'])
-
-
-        if 'tiles' in graphics_to_update:
-            print("UPDATING TILES")
-            self.SurfObjs['tiles_list'] = []
-
-            self.fontObjs['tile'] = pygame.font.Font(self.self_words['font'], size_tiles)
-
-            for tile in game.current:
-                self.SurfObjs['tiles_list'].append(self.fontObjs['tile'].render(tile, True, self.tile['color']))
-
-        if 'self_words' in graphics_to_update:
-            self.SurfObjs['self_words_list'] = []
-
-            size_words, y_gap_words = self.__numwords_to_fontsize(len(self_words_list))
-            self.fontObjs['self_words'] = pygame.font.Font(self.self_words['font'], size_words)
-
-            if taker == 'self':
-                print(f"BLUE; i: {game.new_word_i}")
-                for i, word in enumerate(self_words_list):
-                    if i == game.new_word_i:
-                        print(f"FOUND BLUE")
-                        self.SurfObjs['self_words_list'].append(self.fontObjs['self_words'].render(word, True, self.color_taken))
-                    else:
-                        self.SurfObjs['self_words_list'].append(self.fontObjs['self_words'].render(word, True, self.self_words['color']))
-            else:
-                print("NO BLUE")
-                for word in self_words_list:
-                    self.SurfObjs['self_words_list'].append(self.fontObjs['self_words'].render(word, True, self.self_words['color']))
-
-        if 'opp_words' in graphics_to_update:
-            self.SurfObjs['opp_words_list'] = []
-
-            size_opp_words, y_gap_opp_words = self.__numwords_to_fontsize(len(opp_words_list))
-            self.fontObjs['opp_words'] = pygame.font.Font(self.opp_words['font'], size_opp_words)
-
-            if taker == 'opp':
-                for i, word in enumerate(opp_words_list):
-                    if i == game.new_word_i:
-                        self.SurfObjs['opp_words_list'].append(self.fontObjs['opp_words'].render(word, True, self.color_taken))
-                    else:
-                        self.SurfObjs['opp_words_list'].append(self.fontObjs['opp_words'].render(word, True, self.opp_words['color']))
-            else:
-                for word in opp_words_list:
-                    self.SurfObjs['opp_words_list'].append(self.fontObjs['opp_words'].render(word, True, self.opp_words['color']))
 
         if 'guess' in graphics_to_update:
             self.SurfObjs['guess'] = self.fontObjs['guess'].render('Take: ' + guess, True, self.guess['color'])
@@ -243,32 +233,37 @@ class Graphics:
 
         rect_tiles = self.display_text(self.SurfObjs['current'], self.current['x'], self.current['y'])
 
-        for i, tile in enumerate(self.SurfObjs['tiles_list']):
-            x_tile = x_tile + self.tile['x_gap']
+        rect_tiles_list = []
 
-            self.display_text_tiles(tile, x_tile, y_tile)
+        for i, tile in enumerate(game.current):
+            x_tile = x_tile + size_tiles + 5
 
-            if i % 20 == 19:
-                y_tile = y_tile + y_gap_tile
+            rect_tiles_list.append(self.display_tile(tile, size_tiles, x_tile, y_tile))
+
+            if i % 10 == 9:
+                y_tile = y_tile + size_tiles + 5
                 x_tile = self.tile['x_0']
 
         _ = self.display_text(self.SurfObjs['your'], self.your['x'], self.your['y'])
 
+        rect_self_list = []
 
         x_words_local = self.self_words['x']
         y_words_local = self.self_words['y']
 
         rect_self_list = []
 
-        for i, word in enumerate(self.SurfObjs['self_words_list']):
+        for i, word in enumerate(self_words_list):
 
-            rect_self_list.append(self.display_text(word, x_words_local, y_words_local))
+            rect_self_list.append(self.display_word(word, size_words, x_words_local, y_words_local))
 
             if i % 10 == 9:
                 x_words_local = x_words_local + self.self_words['x_gap']
-                y_words_local = self.self_words['y'] - self.self_words['y_gap']
+                y_words_local = self.self_words['y'] - size_words * self.gap_factor
 
-            y_words_local = y_words_local + self.self_words['y_gap']
+            y_words_local = y_words_local + size_words * self.gap_factor
+
+        rect_self_list = self.flatten(rect_self_list)
 
         rect_guess = self.display_text(self.SurfObjs['guess'], self.guess['x'], self.guess['y'])
 
@@ -279,15 +274,17 @@ class Graphics:
 
         rect_opp_list = []
 
-        for i, word in enumerate(self.SurfObjs['opp_words_list']):
+        for i, word in enumerate(opp_words_list):
 
-            rect_opp_list.append(self.display_text(word, x_opp_words_local, y_opp_words_local))
+            rect_opp_list.append(self.display_word(word, size_opp_words, x_opp_words_local, y_opp_words_local))
 
             if i % 10 == 9:
                 x_opp_words_local = x_opp_words_local + self.opp_words['x_gap']
-                y_opp_words_local = self.opp_words['y'] - self.opp_words['y_gap']
+                y_opp_words_local = self.opp_words['y'] - size_opp_words * self.gap_factor
 
-            y_opp_words_local = y_opp_words_local + self.opp_words['y_gap']
+            y_opp_words_local = y_opp_words_local + size_opp_words * self.gap_factor
+
+        rect_opp_list = self.flatten(rect_opp_list)
 
         rect_flip = self.display_text(self.SurfObjs['flip'], self.flip['x'], self.flip['y'])
 
@@ -296,7 +293,7 @@ class Graphics:
         if 'flip' in graphics_to_update or 'flip_status' in graphics_to_update:
             rects_to_update.append(rect_flip)
         if 'tiles' in graphics_to_update:
-            rects_to_update.append(rect_tiles)
+            rects_to_update = rects_to_update + rect_tiles_list
         if 'self_words' in graphics_to_update:
             rects_to_update = rects_to_update + rect_self_list
         if 'opp_words' in graphics_to_update:
@@ -310,4 +307,5 @@ class Graphics:
             pygame.display.update()
             self.first_time = False
         else:
+            print(f"{rects_to_update}")
             pygame.display.update(rects_to_update)

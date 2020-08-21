@@ -98,8 +98,8 @@ class Banana:
 
         self.last_update = 0
         self.update_event = ''
-        self.taker_id = -1
         self.update_number = 0
+
 
         self.game_over = False
 
@@ -142,29 +142,34 @@ class Banana:
 
         return str
 
-    def __can_take(self, candidate):
-        word_list = self.player2words_list
+    def both_can_take(self, take1, take2):
+        # Checks if two simultaneous takes are compatible with the current game state
 
-        for word in word_list:
-            # First, check if candidate is a superset of the current word
-            if self.__superset(candidate, word, strict=True):
-
-                # Then, check if the tiles needed to make candidate are in the middle
-                if self.__superset(self.current, self.__subtract(candidate, word)):
-                    return True
-
-        word_list = self.playerwords_list
-
-        for word in word_list:
-            if self.__superset(candidate, word, strict=True):
-
-                # Then, check if the tiles needed to make candidate are in the middle
-                if self.__superset(self.current, self.__subtract(candidate, word)):
-                    return True
-        if self.__superset(self.current, candidate, strict=False):
-            return True
-        else:
+        if not self.__superset(self.current, take1.used_tiles + take2.used_tiles):
             return False
+        elif take1.taken_word == take2.taken_word:
+            return False
+        else:
+            return True
+
+    def can_take(self, take):
+        if take.victim == 0:
+            if take.taken_word in self.player1words_list and self.__superset(self.current, take.used_tiles, strict=False):
+                return True
+            else:
+                return False
+
+        elif take.victim == 1:
+            if take.taken_word in self.player2words_list and self.__superset(self.current, take.used_tiles, strict=False):
+                return True
+            else:
+                return False
+
+        elif take.victim == -1:
+            if self.__superset(self.current, take.candidate, strict=False):
+                return True
+            else:
+                return False
 
     def __check_new_take(self, player, taketime, candidate):
         if player == 1:
@@ -178,7 +183,7 @@ class Banana:
         if taketime <= own_last_take:
             return 'no update'
         # Otherwise it's a new take for the player. If they can take it, let them
-        elif self.__can_take(candidate):
+        elif self.can_take(candidate):
             return 'update'
         # Otherwise a new take for the player but they can't take it. If they're later than the other player, too bad
         elif taketime >= opp_last_take:
@@ -403,7 +408,6 @@ class Banana:
         print(f"taker: {take.taker},  victim: {take.victim}, candidate: {take.candidate}, etym_candidate: {take.etym_candidate}, taken_word: {take.taken_word}, used_tiles: {take.used_tiles}, taken_i: {take.taken_i}")
 
 
-
         # Update middle letters
         for letter in take.used_tiles:
             self.current.remove(letter)
@@ -414,6 +418,7 @@ class Banana:
                     del self.player1words[take.taken_word]
                 self.player1words.update({take.candidate: take.etym_candidate})
                 self.player1words_list[take.taken_i] = take.candidate
+                self.new_word_i = take.taken_i
 
             elif take.victim == 1:
                 self.player2words_list.remove(take.taken_word)
@@ -421,10 +426,12 @@ class Banana:
                     del self.player2words[take.taken_word]
                 self.player1words.update({take.candidate: take.etym_candidate})
                 self.player1words_list.append(take.candidate)
+                self.new_word_i = len(self.player1words_list) - 1
 
             elif take.victim == -1:
                 self.player1words.update({take.candidate: take.etym_candidate})
                 self.player1words_list.append(take.candidate)
+                self.new_word_i = len(self.player1words_list) - 1
 
         else:
             if take.victim == 1:
@@ -432,6 +439,7 @@ class Banana:
                     del self.player2words[take.taken_word]
                 self.player2words.update({take.candidate: take.etym_candidate})
                 self.player2words_list[take.taken_i] = take.candidate
+                self.new_word_i = take.taken_i
 
             elif take.victim == 0:
                 self.player1words_list.remove(take.taken_word)
@@ -439,10 +447,12 @@ class Banana:
                     del self.player1words[take.taken_word]
                 self.player2words.update({take.candidate: take.etym_candidate})
                 self.player2words_list.append(take.candidate)
+                self.new_word_i = len(self.player2words_list) - 1
 
             elif take.victim == -1:
                 self.player2words.update({take.candidate: take.etym_candidate})
                 self.player2words_list.append(take.candidate)
+                self.new_word_i = len(self.player2words_list) - 1
 
         self.last_update = time.time()
 

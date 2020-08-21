@@ -31,7 +31,7 @@ game = Banana()
 
 recv_dicts = [{}, {}]
 
-flip_delay = 0.0
+flip_delay = 0
 
 pending_take = None
 
@@ -80,7 +80,11 @@ def threaded_client(conn, player):
                 if data['event'] == 'steal':
                     if pending_take:
                         if pending_take.taker != player:
-                            if data['take'].take_time < pending_take.take_time:
+                            if game.both_can_take(pending_take, data['take']):
+                                game.update(pending_take, pending_take.taker)
+                                game.update(data['take'], player)
+
+                            elif data['take'].take_time < pending_take.take_time:
                                 # TAKE
                                 game.last_take = data['take']
                                 game.update(game.last_take, player)
@@ -88,7 +92,7 @@ def threaded_client(conn, player):
                             else:
                                 # TAKE
                                 game.last_take = pending_take
-                                game.update(game.last_take, other_player(player))
+                                game.update(game.last_take, pending_take.taker)
                                 pending_take = None
 
                             game.update_event = 'take'
@@ -98,7 +102,9 @@ def threaded_client(conn, player):
                             print('Submitting the same take')
 
                     else:
-                        pending_take = data['take']
+                        # No pending take, so this take becomes the pending take if you can still take it
+                        if game.can_take(data['take']):
+                            pending_take = data['take']
 
                 else:
                     if pending_take and pending_take.taker != player and data['time_since_update'] > pending_take.take_time:

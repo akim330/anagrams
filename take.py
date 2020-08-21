@@ -5,7 +5,7 @@ class Take():
         self.candidate = candidate
         self.etym_candidate = etym_candidate
         self.taken_word = taken_word
-        self.used_tiles =  used_tiles
+        self.used_tiles = used_tiles
         self.taken_i = taken_i
         self.take_time = take_time
 
