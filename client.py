@@ -550,9 +550,9 @@ while True:
 
             elif event.key in letter_keys:
                 if event.key != last:
-                    print(f"TYPED {event.unicode.upper()}")
                     # if letter is typed then add it to the current guess
-                    guess = guess + event.unicode.upper()
+                    # guess = guess + event.unicode.upper()
+                    guess = guess + pygame.key.name(event.key).upper()
                     graphics_to_update = graphics_to_update + ['guess']
                     last_type = time.time()
 
