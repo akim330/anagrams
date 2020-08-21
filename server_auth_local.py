@@ -13,7 +13,7 @@ print_check = False
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server = ''
+server = '192.168.1.3'
 port = 5555
 
 server_ip = socket.gethostbyname(server)
@@ -52,7 +52,7 @@ def threaded_client(conn, player):
     print(f"{conn.getsockname()[0]}: Current ID: {currentId}")
     reply = ''
     while True:
-        
+
         if not game.tiles:
             game.game_over = True
 

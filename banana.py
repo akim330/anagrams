@@ -109,7 +109,7 @@ class Banana:
         if not self.tiles:
             self.status = f"No more tiles! Your score: {sum([len(i) for i in self.playerwords_list])}, Opponent's score: {sum([len(i) for i in self.player2words_list])}"
 
-            self.gameover = True
+            self.game_over = True
 
             return None
 

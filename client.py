@@ -478,8 +478,14 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if game.game_over:
-            status = f"No more tiles! Your score: {sum([len(i) for i in game.player1words_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
+        if game.game_over and time.time() - last_update > 3.0:
+            if player == 0:
+                status = f"No more tiles! Your score: {sum([len(i) for i in game.player1words_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
+            else:
+                status = f"No more tiles! Your score: {sum([len(i) for i in game.player2words_list])}, Opponent's score: {sum([len(i) for i in game.player1words_list])}"
+
+            graphics_to_update = graphics_to_update + ['status']
+
 
         if event.type == KEYDOWN:
             if event.key == K_BACKSPACE:
