@@ -31,7 +31,7 @@ game = Banana()
 
 recv_dicts = [{}, {}]
 
-flip_delay = 0.0
+flip_delay = 1.5
 
 pending_take = None
 

@@ -545,6 +545,7 @@ while True:
 
 
             elif event.key in letter_keys:
+                print(f"TYPED {event.unicode.upper()}")
                 # if letter is typed then add it to the current guess
                 guess = guess + event.unicode.upper()
                 graphics_to_update = graphics_to_update + ['guess']
@@ -553,6 +554,9 @@ while True:
     #  ----------
     # |  UPDATE  |
     #  ----------
+
+    current_time = time.time()
+    print(f"CURRENT TIME: {current_time}, LAST TYPE: {last_type}, UPDATE? {time.time() - last_type > 0.2}")
 
     if send_dict['event'] != 'none' or time.time() - last_type > 0.2:
         # Send our send_dict, receive a Banana
