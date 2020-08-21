@@ -472,7 +472,11 @@ while True:
     # |  GAME LOOP  |
     #  -------------
 
+    last = None
+
     for event in pygame.event.get():
+        print(f"EVENT: {event}")
+
 
         if event.type == QUIT:
             pygame.quit()
@@ -545,11 +549,14 @@ while True:
 
 
             elif event.key in letter_keys:
-                print(f"TYPED {event.unicode.upper()}")
-                # if letter is typed then add it to the current guess
-                guess = guess + event.unicode.upper()
-                graphics_to_update = graphics_to_update + ['guess']
-                last_type = time.time()
+                if event.key != last:
+                    print(f"TYPED {event.unicode.upper()}")
+                    # if letter is typed then add it to the current guess
+                    guess = guess + event.unicode.upper()
+                    graphics_to_update = graphics_to_update + ['guess']
+                    last_type = time.time()
+
+                    last = event.key
 
     #  ----------
     # |  UPDATE  |
