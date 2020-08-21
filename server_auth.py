@@ -13,7 +13,7 @@ print_check = False
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-server = '192.168.1.3'
+server = ''
 port = 5555
 
 server_ip = socket.gethostbyname(server)
