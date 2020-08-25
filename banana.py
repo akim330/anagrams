@@ -23,7 +23,7 @@ letter_keys = [K_a, K_b, K_c, K_d, K_e, K_d, K_e, K_f, K_g, K_h, K_i, K_j, K_k, 
 not_allowed_prefixes = ['UN', 'RE']
 not_allowed_suffixes = ['S', 'ED', 'D', 'ES', 'ER', 'R', 'OR', 'ING', 'EST', 'IEST', 'LY', 'TION', 'SION']
 
-word_add_twl = ['acai', 'roo', 'tix']
+word_add_twl = ['acai', 'roo', 'tix', 'uni', 'vin']
 
 flip_delay = 1000 # Delay before flip in ms
 flip_status = ''
@@ -61,15 +61,16 @@ class Banana:
         self.player1taketime = time.time()
         self.player2taketime = time.time()
 
+        '''
         self.fresh_take = False
         self.middle_used = []
         self.taken_word = "\'\'"
 
         self.game_start_time = datetime.datetime.now()
         self.new_initialization = True
+        '''
 
         # Time (do we need??)
-        self.last_update = time.time()
         self.last_flip_update = time.time()
 
         self.flip_status = ''
@@ -77,8 +78,10 @@ class Banana:
         self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
                           'display_graphics': 0, 'send_parse': 0, 'update_players': 0}
 
+        '''
         self.taken_i = -1
         self.new_word_i = -1
+        '''
 
         self.flip_waiting = False
         self.flip_time = 0
@@ -87,25 +90,15 @@ class Banana:
         self.p1_last_take = time.time()
         self.p2_last_take = time.time()
 
-        self.current_prev = []
-        self.player1words_prev = {}
-        self.player1words_list_prev = []
-        self.player2words_prev = {}
-        self.player2words_list_prev = []
-
-        self.status = {}
         self.last_take = None
 
         self.last_update = 0
         self.update_event = ''
         self.update_number = 0
 
-
         self.game_over = False
 
     def flip(self):
-        self.updated = True
-
         if not self.tiles:
             self.status = f"No more tiles! Your score: {sum([len(i) for i in self.playerwords_list])}, Opponent's score: {sum([len(i) for i in self.player2words_list])}"
 
@@ -170,27 +163,6 @@ class Banana:
                 return True
             else:
                 return False
-
-    def __check_new_take(self, player, taketime, candidate):
-        if player == 1:
-            own_last_take = self.p1_last_take
-            opp_last_take = self.p2_last_take
-        else:
-            own_last_take = self.p2_last_take
-            opp_last_take = self.p1_last_take
-
-        # If the take time is older than the player's last take, it's not a new take
-        if taketime <= own_last_take:
-            return 'no update'
-        # Otherwise it's a new take for the player. If they can take it, let them
-        elif self.can_take(candidate):
-            return 'update'
-        # Otherwise a new take for the player but they can't take it. If they're later than the other player, too bad
-        elif taketime >= opp_last_take:
-            return 'no update'
-        # Otherwise they were actually earlier than the other player and we need to rewrite
-        else:
-            return 'overwrite'
 
     def __check_steal(self, candidate, etyms_candidate, is_player_2):
         # Check whether a steal happens
@@ -414,10 +386,10 @@ class Banana:
 
         if take.taker == 0:
             if take.victim == 0:
+                self.player1words_list[take.taken_i] = take.candidate
                 if not take.taken_word in self.player1words_list:
                     del self.player1words[take.taken_word]
                 self.player1words.update({take.candidate: take.etym_candidate})
-                self.player1words_list[take.taken_i] = take.candidate
                 self.new_word_i = take.taken_i
 
             elif take.victim == 1:

@@ -15,7 +15,7 @@ from graphics_tiles import Graphics
 import pygame, sys
 from pygame.locals import *
 
-time_check = True
+time_check = False
 print_check = True
 no_prefix_suffix = True
 
@@ -188,7 +188,8 @@ while True:
     #  ----------
 
     current_time = time.time()
-    print(f"CURRENT TIME: {current_time}, LAST TYPE: {last_type}, UPDATE? {time.time() - last_type > 0.2}")
+
+    print(f"SEND DICT: {send_dict}")
 
     if send_dict['event'] != 'none' or time.time() - last_type > 0.2:
         # Send our send_dict, receive a Banana

@@ -11,8 +11,12 @@ GRAY = (230, 230, 230)
 BGCOLOR = WHITE
 TEXTCOLOR = BLACK
 
-WINDOWWIDTH = 640
-WINDOWHEIGHT = 640
+# Original was 640 x 640
+
+WINDOWWIDTH = 1000
+WINDOWHEIGHT = 800
+
+
 
 DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
@@ -71,7 +75,7 @@ class Graphics:
         self.opp = {'font': 'freesansbold.ttf',
                     'size': 32,
                     'color': BLACK,
-                    'x': 300,
+                    'x': WINDOWWIDTH / 2 + 10,
                     'y': 100,
                     'y_gap': 70}
 
@@ -80,7 +84,7 @@ class Graphics:
         self.opp_words = {'font': 'freesansbold.ttf',
                           'size': 48,
                           'color': BLACK,
-                          'x': 320,
+                          'x': WINDOWWIDTH / 2 + 30,
                           'y': self.opp['y'] + self.opp['y_gap'],
                           'x_gap': 150,
                           'y_gap': 50}
@@ -92,14 +96,14 @@ class Graphics:
                       'size': 32,
                       'color': BLACK,
                       'x': 10,
-                      'y': 500}
+                      'y': WINDOWHEIGHT - 140}
 
         # Status
         self.status = {'font': 'freesansbold.ttf',
                        'size': 20,
                        'color': BLACK,
                        'x': 10,
-                       'y': 550}
+                       'y': WINDOWHEIGHT - 100}
 
         self.fontObjs = {'current': pygame.font.Font(self.current['font'], self.current['size']),
                          'tile': pygame.font.Font(self.tile['font'], self.tile['size']),
@@ -129,6 +133,11 @@ class Graphics:
         for letter in ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']:
             self.tile_dict[letter] = pygame.image.load(letter + '.png')
 
+        self.word_space_y = self.guess['y'] - self.your['y']
+        self.word_space_x = WINDOWWIDTH / 2
+
+        self.words_per_column = int(self.word_space_y / (self.self_words['size'] * self.gap_factor))
+
     def flatten(self, list):
         flat_list = []
         for sublist in list:
@@ -137,17 +146,21 @@ class Graphics:
         return flat_list
 
     def __numwords_to_fontsize(self, numwords):
-        if numwords <= 6:
-            return int(self.self_words['size'] / 1.25), int(self.self_words['y_gap'] / 1.25)
-        elif 6 < numwords <= 10:
-            return int(self.self_words['size'] / 3), int(self.self_words['y_gap'] / 3)
-        elif 10 < numwords <= 20:
-            return int(self.self_words['size'] / 5), int(self.self_words['y_gap'] / 5)
-        elif 20 < numwords <= 50:
-            return int(self.self_words['size'] / 8), int(self.self_words['y_gap'] / 8)
+        if numwords <= self.words_per_column * 2:
+            return int(self.self_words['size']), int(self.self_words['y_gap'] / 1.25)
+        else:
+            return int(self.self_words['size']/2), int(self.self_words['y_gap'] / 2)
+            """
+            elif 6 < numwords <= 10:
+                return int(self.self_words['size'] / 3), int(self.self_words['y_gap'] / 3)
+            elif 10 < numwords <= 20:
+                return int(self.self_words['size'] / 5), int(self.self_words['y_gap'] / 5)
+            elif 20 < numwords <= 50:
+                return int(self.self_words['size'] / 8), int(self.self_words['y_gap'] / 8)
+            """
 
     def __numtiles_to_fontsize(self, numtiles):
-        if numtiles <= 10:
+        if numtiles <= 20:
             return self.tile['size'], self.tile['y_gap'], self.tile['x_gap']
         elif 10 < numtiles <= 40:
             return int(self.tile['size'] / 1.5), int(self.tile['y_gap'] / 1.5), int(self.tile['x_gap'] / 1.5)
@@ -193,6 +206,8 @@ class Graphics:
         return textRectObj_list
 
     def printstatus(self, game, player, graphics_to_update, guess, status, taker):
+
+        gap_btwn_cols = 20
 
         rects_to_update = []
 
@@ -253,15 +268,31 @@ class Graphics:
 
         rect_self_list = []
 
+        past_first_column = False
         for i, word in enumerate(self_words_list):
+
+            print(f"Displaying {word}")
+            print(f"initial y value: {y_words_local}")
+
+            if y_words_local >= self.guess['y'] - size_words or past_first_column:
+                past_first_column = True
+
+                print(f"i {i}")
+                print(f"words per columns: {self.words_per_column}")
+
+                adjacent_word_i = int(i - self.words_per_column)
+                print(f"adjacent word: {adjacent_word_i}")
+                print(f"adjacent word's y: {rect_self_list[adjacent_word_i][-1].center[1]}")
+                x_words_local = rect_self_list[adjacent_word_i][-1].right + gap_btwn_cols + size_tiles
+                y_words_local = rect_self_list[adjacent_word_i][-1].center[1]
+
+            print(f"after new column y value: {y_words_local}")
 
             rect_self_list.append(self.display_word(word, size_words, x_words_local, y_words_local))
 
-            if i % 10 == 9:
-                x_words_local = x_words_local + self.self_words['x_gap']
-                y_words_local = self.self_words['y'] - size_words * self.gap_factor
-
             y_words_local = y_words_local + size_words * self.gap_factor
+
+            print(f"end of loop y value: {y_words_local}")
 
         rect_self_list = self.flatten(rect_self_list)
 
@@ -274,13 +305,17 @@ class Graphics:
 
         rect_opp_list = []
 
+        past_first_column = False
         for i, word in enumerate(opp_words_list):
 
-            rect_opp_list.append(self.display_word(word, size_opp_words, x_opp_words_local, y_opp_words_local))
+            if y_opp_words_local >= self.guess['y'] - size_opp_words or past_first_column:
+                past_first_column = True
 
-            if i % 10 == 9:
-                x_opp_words_local = x_opp_words_local + self.opp_words['x_gap']
-                y_opp_words_local = self.opp_words['y'] - size_opp_words * self.gap_factor
+                adjacent_word_i = int(i - self.words_per_column)
+                x_opp_words_local = rect_opp_list[adjacent_word_i][-1].right + gap_btwn_cols + size_tiles
+                y_opp_words_local = rect_opp_list[adjacent_word_i][-1].center[1]
+
+            rect_opp_list.append(self.display_word(word, size_opp_words, x_opp_words_local, y_opp_words_local))
 
             y_opp_words_local = y_opp_words_local + size_opp_words * self.gap_factor
 

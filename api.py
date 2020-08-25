@@ -11,12 +11,23 @@ def longestSubstringFinder(string1, string2):
     len1, len2 = len(string1), len(string2)
     for i in range(len1):
         match = ""
+        step = 0
         for j in range(len2):
-            if (i + j < len1 and string1[i + j] == string2[j]):
+            if i + step < len1 and string1[i + step] == string2[j]:
                 match += string2[j]
+                step += 1
             else:
-                if (len(match) > len(answer)): answer = match
-                match = ""
+                if (len(match) > len(answer)):
+                    answer = match
+                if string1[i] == string2[j]:
+                    match = string2[j]
+                    step = 1
+                else:
+                    match = ""
+                    step = 0
+
+        if len(match) > len(answer):
+            answer = match
     end_time = time.time()
     # print(f"{end_time - start_time}")
     return answer

@@ -10,4 +10,3 @@ class Take():
         self.take_time = take_time
 
 
-
