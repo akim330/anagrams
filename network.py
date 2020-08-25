@@ -31,7 +31,7 @@ class Network:
         """
         #try:
         self.client.send(pickle.dumps(data))
-        return pickle.loads(self.client.recv(8192))
+        return pickle.loads(self.client.recv(32768))
         """
         except:
             print("Error!")
