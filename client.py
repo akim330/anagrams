@@ -9,6 +9,7 @@ from network import Network
 import pickle
 
 from banana import Banana
+from banana import GameState
 from take import Take
 from graphics_tiles import Graphics
 
@@ -64,11 +65,19 @@ clock = pygame.time.Clock()
 
 net = Network()
 
+print("Getting ID")
+
 player = net.get_id()
+
+print("Initializing graphics")
 
 graphics = Graphics()
 
-game = net.send(send_dict)
+print("Sending send_dict")
+
+game = Banana(net.send(send_dict))
+
+print("Displaying initial elements")
 
 # DISPLAYSURF.fill(BGCOLOR)
 graphics.printstatus(game, player, ['flip', 'status', 'guess'], guess, status, taker)
@@ -107,11 +116,11 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if game.game_over and time.time() - last_update > 3.0:
+        if game.game_state.game_over and time.time() - last_update > 3.0:
             if player == 0:
-                status = f"No more tiles! Your score: {sum([len(i) for i in game.player1words_list])}, Opponent's score: {sum([len(i) for i in game.player2words_list])}"
+                status = f"No more tiles! Your score: {sum([len(i) for i in game.game_state.player1words_list])}, Opponent's score: {sum([len(i) for i in game.game_state.player2words_list])}"
             else:
-                status = f"No more tiles! Your score: {sum([len(i) for i in game.player2words_list])}, Opponent's score: {sum([len(i) for i in game.player1words_list])}"
+                status = f"No more tiles! Your score: {sum([len(i) for i in game.game_state.player2words_list])}, Opponent's score: {sum([len(i) for i in game.game_state.player1words_list])}"
 
             graphics_to_update = graphics_to_update + ['status']
 
@@ -133,7 +142,7 @@ while True:
             elif event.key == K_RETURN:
                 # if Return and no guess is present, then flip next tile. If guess is present, see if it's a take
                 if guess == '':
-                    if not game.game_over:
+                    if not game.game_state.game_over:
                         send_dict['event'] = 'flip_request'
                         graphics_to_update = graphics_to_update + ['flip_status']
 
@@ -199,7 +208,7 @@ while True:
         if time_check:
             start_send = time.time()
 
-        recv_game = net.send(send_dict)
+        recv_game_state = net.send(send_dict)
 
         if time_check:
             end_send = time.time()
@@ -207,56 +216,56 @@ while True:
 
         send_dict['event'] = 'none'
 
-        if recv_game and recv_game.update_number > game.update_number:
+        if recv_game_state and recv_game_state.update_number > game.game_state.update_number:
 
             if time_check:
                 start_update = time.time()
 
-            game = recv_game
+            game.game_state = recv_game_state
 
             print(f"My ID: {player}")
-            print(f"Recv Game current: {recv_game.current}")
-            print(f"Game current: {game.current}")
-            print(f"Update event: {game.update_event}")
-            print(f"Recv flip status: {recv_game.flip_status}")
-            print(f"Flip status: {game.flip_status}")
-            print(f"Recv Player 1 words: {recv_game.player1words_list}")
-            print(f"Recv Player 2 words: {recv_game.player2words_list}")
-            print(f"Player 1 words: {game.player1words_list}")
-            print(f"Player 2 words: {game.player2words_list}")
+            print(f"Recv Game current: {recv_game_state.current}")
+            print(f"Game current: {game.game_state.current}")
+            print(f"Update event: {game.game_state.update_event}")
+            print(f"Recv flip status: {recv_game_state.flip_status}")
+            print(f"Flip status: {game.game_state.flip_status}")
+            print(f"Recv Player 1 words: {recv_game_state.player1words_list}")
+            print(f"Recv Player 2 words: {recv_game_state.player2words_list}")
+            print(f"Player 1 words: {game.game_state.player1words_list}")
+            print(f"Player 2 words: {game.game_state.player2words_list}")
 
-            if game.update_event == 'take':
+            if game.game_state.update_event == 'take':
                 last_update = time.time()
                 graphics_to_update = graphics_to_update + ['tiles', 'self_words', 'opp_words', 'status']
 
-                if game.last_take.taker == player:
+                if game.game_state.last_take.taker == player:
                     taker = 'self'
                     taker_text = "You"
-                    if game.last_take.victim == player:
+                    if game.game_state.last_take.victim == player:
                         victim = "yourself"
-                    elif game.last_take.victim == other_player(player):
+                    elif game.game_state.last_take.victim == other_player(player):
                         victim = "opponent"
                     else:
                         victim = "the middle"
                 else:
                     taker = 'opp'
                     taker_text = "Opponent"
-                    if game.last_take.victim == player:
+                    if game.game_state.last_take.victim == player:
                         victim = "you"
-                    elif game.last_take.victim == other_player(player):
+                    elif game.game_state.last_take.victim == other_player(player):
                         victim = "themselves"
                     else:
                         victim = "the middle"
 
                 if victim == "the middle":
-                    status = f"{taker_text} took {game.last_take.candidate} from {victim}!"
+                    status = f"{taker_text} took {game.game_state.last_take.candidate} from {victim}!"
                 else:
-                    status = f"{taker_text} took {game.last_take.candidate} from {victim}! ({game.last_take.taken_word} -> {game.last_take.candidate})"
+                    status = f"{taker_text} took {game.game_state.last_take.candidate} from {victim}! ({game.game_state.last_take.taken_word} -> {game.game_state.last_take.candidate})"
 
 
-            elif game.update_event == 'flip_request':
+            elif game.game_state.update_event == 'flip_request':
                 graphics_to_update = graphics_to_update + ['flip_status']
-            elif game.update_event == 'flip':
+            elif game.game_state.update_event == 'flip':
                 graphics_to_update = graphics_to_update + ['flip_status', 'tiles']
                 last_update = time.time()
 

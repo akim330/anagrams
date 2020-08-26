@@ -174,6 +174,40 @@ def merriam_root(word):
 
     return root_word
 
+def twl_get(word):
+    url_twl = 'https://scrabble123.com/scrabble-twl-dictionary/' + str(word)
+    raw_html = simple_get(url_twl)
+    html_text = BeautifulSoup(raw_html, 'html.parser').get_text()
+    return html_text
+
+def twl_check_web(word):
+    start_time = time.time()
+    html_text = twl_get(word)
+    is_word = 'is Accepted' in html_text
+    print(f"Time taken: {time.time() - start_time}")
+    return is_word
+
+class Test:
+    def __init__(self):
+        self.x = 2
+
+class Foo():
+    def __init__(self, t=None):
+        if t:
+            self.test = t
+        else:
+            self.test = Test()
+
+def twl_check_file(word):
+    start_time = time.time()
+    with open('TWL06 copy.txt') as f:
+        if word in f.read():
+            print(f"Time taken: {time.time() - start_time}")
+            return True
+        else:
+            print(f"Time taken: {time.time() - start_time}")
+
+
 def merriam_root_check(word1, word2):
     return merriam_root(word1) == merriam_root(word2)
 

@@ -39,7 +39,7 @@ def other_player(player):
     else:
         return 0
 
-class Banana:
+class GameState:
     def __init__(self):
         # -------- #
         #  BANANA  #
@@ -58,30 +58,12 @@ class Banana:
         self.player2words = {}
         self.player2words_list = []
 
-        self.player1taketime = time.time()
-        self.player2taketime = time.time()
-
-        '''
-        self.fresh_take = False
-        self.middle_used = []
-        self.taken_word = "\'\'"
-
-        self.game_start_time = datetime.datetime.now()
-        self.new_initialization = True
-        '''
+        self.flip_status = ''
 
         # Time (do we need??)
         self.last_flip_update = time.time()
 
         self.flip_status = ''
-
-        self.time_dict = {'loop': 0, 'send_data': 0, 'take': 0, 'update_graphics': 0,
-                          'display_graphics': 0, 'send_parse': 0, 'update_players': 0}
-
-        '''
-        self.taken_i = -1
-        self.new_word_i = -1
-        '''
 
         self.flip_waiting = False
         self.flip_time = 0
@@ -98,20 +80,65 @@ class Banana:
 
         self.game_over = False
 
+
+class Banana:
+    def __init__(self, game_state=None):
+        if game_state:
+            self.game_state = game_state
+        else:
+            self.game_state = GameState()
+
+        '''
+        
+        # -------- #
+        #  BANANA  #
+        # -------- #
+        self.tiles = []
+        for letter in letters:
+            self.tiles = self.tiles + list(itertools.repeat(letter, letter_freq[letter]))
+
+        random.shuffle(self.tiles)
+
+        # Current tiles available
+        self.current = []
+
+        self.player1words = {}
+        self.player1words_list = []
+        self.player2words = {}
+        self.player2words_list = []
+
+        self.flip_status = ''
+
+        # Time (do we need??)
+        self.last_flip_update = time.time()
+
+        self.flip_status = ''
+
+        self.flip_waiting = False
+        self.flip_time = 0
+
+        self.time_last_take = time.time()
+        self.p1_last_take = time.time()
+        self.p2_last_take = time.time()
+
+        self.last_take = None
+
+        self.last_update = 0
+        self.update_event = ''
+        self.update_number = 0
+
+        self.game_over = False
+        '''
+
     def flip(self):
-        if not self.tiles:
-            self.status = f"No more tiles! Your score: {sum([len(i) for i in self.playerwords_list])}, Opponent's score: {sum([len(i) for i in self.player2words_list])}"
-
-            self.game_over = True
-
+        if not self.game_state.tiles:
+            self.game_state.game_over = True
             return None
 
-        self.last_update = datetime.datetime.now()
+        last = self.game_state.tiles.pop()
+        self.game_state.current.append(last)
 
-        last = self.tiles.pop()
-        self.current.append(last)
-
-    def __superset(self, word1, word2, strict=False):
+    def superset(self, word1, word2, strict=False):
         # Can word 1 take word 2?
         word1_counter = Counter(word1)
         word2_counter = Counter(word2)
@@ -138,7 +165,7 @@ class Banana:
     def both_can_take(self, take1, take2):
         # Checks if two simultaneous takes are compatible with the current game state
 
-        if not self.__superset(self.current, take1.used_tiles + take2.used_tiles):
+        if not self.superset(self.game_state.current, take1.used_tiles + take2.used_tiles):
             return False
         elif take1.taken_word == take2.taken_word:
             return False
@@ -147,19 +174,19 @@ class Banana:
 
     def can_take(self, take):
         if take.victim == 0:
-            if take.taken_word in self.player1words_list and self.__superset(self.current, take.used_tiles, strict=False):
+            if take.taken_word in self.game_state.player1words_list and self.superset(self.game_state.current, take.used_tiles, strict=False):
                 return True
             else:
                 return False
 
         elif take.victim == 1:
-            if take.taken_word in self.player2words_list and self.__superset(self.current, take.used_tiles, strict=False):
+            if take.taken_word in self.game_state.player2words_list and self.superset(self.game_state.current, take.used_tiles, strict=False):
                 return True
             else:
                 return False
 
         elif take.victim == -1:
-            if self.__superset(self.current, take.candidate, strict=False):
+            if self.superset(self.game_state.current, take.candidate, strict=False):
                 return True
             else:
                 return False
@@ -176,19 +203,19 @@ class Banana:
         event_type = 'tiles'
 
         if is_player_2:
-            word_list = self.player2words_list
-            word_dict = self.player2words
+            word_list = self.game_state.player2words_list
+            word_dict = self.game_state.player2words
         else:
-            word_list = self.player1words_list
-            word_dict = self.player1words
+            word_list = self.game_state.player1words_list
+            word_dict = self.game_state.player1words
 
 
         for i, word in enumerate(word_list):
             # First, check if candidate is a superset of the current word
-            if self.__superset(candidate, word, strict=True):
+            if self.superset(candidate, word, strict=True):
 
                 # Then, check if the tiles needed to make candidate are in the middle
-                if not self.__superset(self.current, self.__subtract(candidate, word)):
+                if not self.superset(self.game_state.current, self.__subtract(candidate, word)):
                     event_type = 'tiles'
                 else:
                     etyms_word = word_dict[word]
@@ -209,7 +236,7 @@ class Banana:
                         taken_word = word
                         taken_i = i
                         return True, event_type, taken_word, taken_i
-        if not is_player_2 and self.__superset(self.current, candidate, strict=False):
+        if not is_player_2 and self.superset(self.game_state.current, candidate, strict=False):
             # This is to check middle steals. We have "is_opponent" because we're running this current __check_steal
             # function twice, once for the opponent's words and once for your words, and we don't want it to check
             # for a middle steal twice. So we say that in the first go-through (opponent's words), don't check middle
@@ -291,8 +318,6 @@ class Banana:
             self_is_taken, event_type, taken_word, taken_i = self.__check_steal(candidate, etyms_candidate, False)
 
             if self_is_taken:
-                self.last_update = self.take_start_time
-                self.updated = True
                 if event_type == 'steal':
                     candidate_list = list(candidate)
 
@@ -300,13 +325,10 @@ class Banana:
                         candidate_list.remove(letter)
 
                     return 'steal', Take(player, 0, candidate, etyms_candidate, taken_word, taken_i,
-                                candidate_list, self.take_start_time - last_update)
-
+                                        candidate_list, self.take_start_time - last_update)
 
                 elif event_type == 'middle':
                     candidate_list = list(candidate)
-
-                    self.take_end_time = datetime.datetime.now()
 
                     return 'steal', Take(player, -1, candidate, etyms_candidate, '', taken_i, candidate_list, self.take_start_time - last_update)
 
@@ -321,46 +343,45 @@ class Banana:
             else:
                 self.status = "Tiles aren't there! " + f"({candidate})"
 
-
     def __update_word_lists(self, player, victim, candidate, etym_candidate, taken_word, taken_i):
 
         if player == 1:
             if victim == 'self':
-                self.player1words_list.remove(taken_word)
-                if not taken_word in self.player1words_list:
-                    del self.player1words[taken_word]
-                self.player1words.update({candidate: etym_candidate})
-                self.player1words_list[taken_i](candidate)
+                self.game_state.player1words_list.remove(taken_word)
+                if not taken_word in self.game_state.player1words_list:
+                    del self.game_state.player1words[taken_word]
+                self.game_state.player1words.update({candidate: etym_candidate})
+                self.game_state.player1words_list[taken_i](candidate)
 
             elif victim == 'opp':
-                self.player2words_list.remove(taken_word)
-                if not taken_word in self.player2words_list:
-                    del self.player2words[taken_word]
-                self.player1words.update({candidate: etym_candidate})
-                self.player1words_list.append(candidate)
+                self.game_state.player2words_list.remove(taken_word)
+                if not taken_word in self.game_state.player2words_list:
+                    del self.game_state.player2words[taken_word]
+                self.game_state.player1words.update({candidate: etym_candidate})
+                self.game_state.player1words_list.append(candidate)
 
             elif victim == 'middle':
-                self.player1words.update({candidate: etym_candidate})
-                self.player1words_list.append(candidate)
+                self.game_state.player1words.update({candidate: etym_candidate})
+                self.game_state.player1words_list.append(candidate)
 
         elif player == 2:
             if victim == 'self':
-                self.player2words_list.remove(taken_word)
-                if not taken_word in self.player2words_list:
-                    del self.player2words[taken_word]
-                self.player2words.update({candidate: etym_candidate})
-                self.player2words_list[taken_i](candidate)
+                self.game_state.player2words_list.remove(taken_word)
+                if not taken_word in self.game_state.player2words_list:
+                    del self.game_state.player2words[taken_word]
+                self.game_state.player2words.update({candidate: etym_candidate})
+                self.game_state.player2words_list[taken_i](candidate)
 
             elif victim == 'opp':
-                self.player1words_list.remove(taken_word)
-                if not taken_word in self.player1words_list:
-                    del self.player1words[taken_word]
-                self.player2words.update({candidate: etym_candidate})
-                self.player2words_list.append(candidate)
+                self.game_state.player1words_list.remove(taken_word)
+                if not taken_word in self.game_state.player1words_list:
+                    del self.game_state.player1words[taken_word]
+                self.game_state.player2words.update({candidate: etym_candidate})
+                self.game_state.player2words_list.append(candidate)
 
             elif victim == 'middle':
-                self.player2words.update({candidate: etym_candidate})
-                self.player2words_list.append(candidate)
+                self.game_state.player2words.update({candidate: etym_candidate})
+                self.game_state.player2words_list.append(candidate)
 
     def update(self, take, player):
         # If game can be updated according to the update_dict, then update
@@ -382,51 +403,50 @@ class Banana:
 
         # Update middle letters
         for letter in take.used_tiles:
-            self.current.remove(letter)
+            self.game_state.current.remove(letter)
 
         if take.taker == 0:
             if take.victim == 0:
-                self.player1words_list[take.taken_i] = take.candidate
-                if not take.taken_word in self.player1words_list:
-                    del self.player1words[take.taken_word]
-                self.player1words.update({take.candidate: take.etym_candidate})
+                self.game_state.player1words_list[take.taken_i] = take.candidate
+                if not take.taken_word in self.game_state.player1words_list:
+                    del self.game_state.player1words[take.taken_word]
+                self.game_state.player1words.update({take.candidate: take.etym_candidate})
                 self.new_word_i = take.taken_i
 
             elif take.victim == 1:
-                self.player2words_list.remove(take.taken_word)
-                if not take.taken_word in self.player2words_list:
-                    del self.player2words[take.taken_word]
-                self.player1words.update({take.candidate: take.etym_candidate})
-                self.player1words_list.append(take.candidate)
-                self.new_word_i = len(self.player1words_list) - 1
+                self.game_state.player2words_list.remove(take.taken_word)
+                if not take.taken_word in self.game_state.player2words_list:
+                    del self.game_state.player2words[take.taken_word]
+                self.game_state.player1words.update({take.candidate: take.etym_candidate})
+                self.game_state.player1words_list.append(take.candidate)
+                self.new_word_i = len(self.game_state.player1words_list) - 1
 
             elif take.victim == -1:
-                self.player1words.update({take.candidate: take.etym_candidate})
-                self.player1words_list.append(take.candidate)
-                self.new_word_i = len(self.player1words_list) - 1
+                self.game_state.player1words.update({take.candidate: take.etym_candidate})
+                self.game_state.player1words_list.append(take.candidate)
+                self.new_word_i = len(self.game_state.player1words_list) - 1
 
         else:
             if take.victim == 1:
-                if not take.taken_word in self.player2words_list:
-                    del self.player2words[take.taken_word]
-                self.player2words.update({take.candidate: take.etym_candidate})
-                self.player2words_list[take.taken_i] = take.candidate
+                if not take.taken_word in self.game_state.player2words_list:
+                    del self.game_state.player2words[take.taken_word]
+                self.game_state.player2words.update({take.candidate: take.etym_candidate})
+                self.game_state.player2words_list[take.taken_i] = take.candidate
                 self.new_word_i = take.taken_i
 
             elif take.victim == 0:
-                self.player1words_list.remove(take.taken_word)
-                if not take.taken_word in self.player1words_list:
-                    del self.player1words[take.taken_word]
-                self.player2words.update({take.candidate: take.etym_candidate})
-                self.player2words_list.append(take.candidate)
-                self.new_word_i = len(self.player2words_list) - 1
+                self.game_state.player1words_list.remove(take.taken_word)
+                if not take.taken_word in self.game_state.player1words_list:
+                    del self.game_state.player1words[take.taken_word]
+                self.game_state.player2words.update({take.candidate: take.etym_candidate})
+                self.game_state.player2words_list.append(take.candidate)
+                self.new_word_i = len(self.game_state.player2words_list) - 1
 
             elif take.victim == -1:
-                self.player2words.update({take.candidate: take.etym_candidate})
-                self.player2words_list.append(take.candidate)
-                self.new_word_i = len(self.player2words_list) - 1
+                self.game_state.player2words.update({take.candidate: take.etym_candidate})
+                self.game_state.player2words_list.append(take.candidate)
+                self.new_word_i = len(self.game_state.player2words_list) - 1
 
-        self.last_update = time.time()
 
 
 

@@ -212,25 +212,25 @@ class Graphics:
         rects_to_update = []
 
         if player == 0:
-            self_words_list = game.player1words_list
-            self_words = game.player1words
-            opp_words_list = game.player2words_list
-            opp_words = game.player2words
+            self_words_list = game.game_state.player1words_list
+            self_words = game.game_state.player1words
+            opp_words_list = game.game_state.player2words_list
+            opp_words = game.game_state.player2words
         else:
-            self_words_list = game.player2words_list
-            self_words = game.player2words
-            opp_words_list = game.player1words_list
-            opp_words = game.player1words
+            self_words_list = game.game_state.player2words_list
+            self_words = game.game_state.player2words
+            opp_words_list = game.game_state.player1words_list
+            opp_words = game.game_state.player1words
 
         # Make the surface objects (or lists of surface objects)
 
-        size_tiles, y_gap_tile, x_gap_tile = self.__numtiles_to_fontsize(len(game.current))
+        size_tiles, y_gap_tile, x_gap_tile = self.__numtiles_to_fontsize(len(game.game_state.current))
         size_words, y_gap_words = self.__numwords_to_fontsize(len(self_words_list))
         size_opp_words, y_gap_opp_words = self.__numwords_to_fontsize(len(opp_words_list))
 
         if 'flip' in graphics_to_update or 'flip_status' in graphics_to_update:
-            print(f"Updating flip status to {game.flip_status}!")
-            self.SurfObjs['flip'] = self.fontObjs['flip'].render(game.flip_status, True, self.flip['color'])
+            print(f"Updating flip status to {game.game_state.flip_status}!")
+            self.SurfObjs['flip'] = self.fontObjs['flip'].render(game.game_state.flip_status, True, self.flip['color'])
 
         if 'guess' in graphics_to_update:
             self.SurfObjs['guess'] = self.fontObjs['guess'].render('Take: ' + guess, True, self.guess['color'])
@@ -250,7 +250,7 @@ class Graphics:
 
         rect_tiles_list = []
 
-        for i, tile in enumerate(game.current):
+        for i, tile in enumerate(game.game_state.current):
             x_tile = x_tile + size_tiles + 5
 
             rect_tiles_list.append(self.display_tile(tile, size_tiles, x_tile, y_tile))

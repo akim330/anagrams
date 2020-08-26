@@ -6,6 +6,7 @@ import time
 import pickle
 
 from banana import Banana
+from banana import GameState
 from take import Take
 
 
@@ -27,7 +28,8 @@ except socket.error as e:
 s.listen(2)
 print("Waiting for a connection")
 
-game = Banana()
+game_state = GameState()
+game = Banana(game_state)
 
 recv_dicts = [{}, {}]
 
@@ -53,20 +55,20 @@ def threaded_client(conn, player):
     reply = ''
     while True:
 
-        if not game.tiles:
-            game.game_over = True
+        if not game.game_state.tiles:
+            game.game_state.game_over = True
 
 
         if print_check:
-            print(f"Flip_waiting: {game.flip_waiting}; Flip time: {game.flip_time}; Current time: {time.time()}")
+            print(f"Flip_waiting: {game.game_state.flip_waiting}; Flip time: {game.game_state.flip_time}; Current time: {time.time()}")
 
-        if game.flip_waiting and time.time() > game.flip_time:
+        if game.game_state.flip_waiting and time.time() > game.game_state.flip_time:
             game.flip()
-            game.flip_waiting = False
-            game.flip_status = 'Flipped!'
+            game.game_state.flip_waiting = False
+            game.game_state.flip_status = 'Flipped!'
 
-            game.update_event = 'flip'
-            game.update_number += 1
+            game.game_state.update_event = 'flip'
+            game.game_state.update_number += 1
 
 
         try:
@@ -86,17 +88,17 @@ def threaded_client(conn, player):
 
                             elif data['take'].take_time < pending_take.take_time:
                                 # TAKE
-                                game.last_take = data['take']
+                                game.game_state.last_take = data['take']
                                 game.update(game.last_take, player)
                                 pending_take = None
                             else:
                                 # TAKE
-                                game.last_take = pending_take
-                                game.update(game.last_take, pending_take.taker)
+                                game.game_state.last_take = pending_take
+                                game.update(game.game_state.last_take, pending_take.taker)
                                 pending_take = None
 
-                            game.update_event = 'take'
-                            game.update_number += 1
+                            game.game_state.update_event = 'take'
+                            game.game_state.update_number += 1
 
                         else:
                             print('Submitting the same take')
@@ -109,25 +111,25 @@ def threaded_client(conn, player):
                 else:
                     if pending_take and pending_take.taker != player and data['time_since_update'] > pending_take.take_time:
                         # TAKE
-                        game.last_take = pending_take
+                        game.game_state.last_take = pending_take
                         game.update(game.last_take, other_player(player))
                         pending_take = None
 
-                        game.update_event = 'take'
-                        game.update_number += 1
+                        game.game_state.update_event = 'take'
+                        game.game_state.update_number += 1
 
 
 
                     elif data['event'] == 'flip_request':
-                        if not game.flip_waiting:
-                            game.flip_waiting = True
-                            game.flip_time = time.time() + flip_delay
-                            game.flip_status = 'Ready...'
+                        if not game.game_state.flip_waiting:
+                            game.game_state.flip_waiting = True
+                            game.game_state.flip_time = time.time() + flip_delay
+                            game.game_state.flip_status = 'Ready...'
 
-                            game.update_event = 'flip_request'
-                            game.update_number += 1
+                            game.game_state.update_event = 'flip_request'
+                            game.game_state.update_number += 1
 
-            conn.sendall(pickle.dumps(game))
+            conn.sendall(pickle.dumps(game.game_state))
         except socket.error as e:
             print(str(e))
             break

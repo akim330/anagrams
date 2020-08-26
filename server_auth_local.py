@@ -83,6 +83,7 @@ def threaded_client(conn, player):
                             if game.both_can_take(pending_take, data['take']):
                                 game.update(pending_take, pending_take.taker)
                                 game.update(data['take'], player)
+                                pending_take = None
 
                             elif data['take'].take_time < pending_take.take_time:
                                 # TAKE
@@ -99,7 +100,8 @@ def threaded_client(conn, player):
                             game.update_number += 1
 
                         else:
-                            print('Submitting the same take')
+                            if game.superset(data['take'].candidate, pending_take.candidate, strict=True):
+                                pending_take = data['take']
 
                     else:
                         # No pending take, so this take becomes the pending take if you can still take it
