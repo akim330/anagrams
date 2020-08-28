@@ -89,7 +89,7 @@ def threaded_client(conn, player):
                             elif data['take'].take_time < pending_take.take_time:
                                 # TAKE
                                 game.game_state.last_take = data['take']
-                                game.update(game.last_take, player)
+                                game.update(game.game_state.last_take, player)
                                 pending_take = None
                             else:
                                 # TAKE
@@ -112,7 +112,7 @@ def threaded_client(conn, player):
                     if pending_take and pending_take.taker != player and data['time_since_update'] > pending_take.take_time:
                         # TAKE
                         game.game_state.last_take = pending_take
-                        game.update(game.last_take, other_player(player))
+                        game.update(game.game_state.last_take, other_player(player))
                         pending_take = None
 
                         game.game_state.update_event = 'take'

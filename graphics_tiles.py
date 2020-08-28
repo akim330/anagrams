@@ -327,7 +327,7 @@ class Graphics:
 
         if 'flip' in graphics_to_update or 'flip_status' in graphics_to_update:
             rects_to_update.append(rect_flip)
-        if 'tiles' in graphics_to_update:
+        if 'tiles' == 'tiles':
             rects_to_update = rects_to_update + rect_tiles_list
         if 'self_words' in graphics_to_update:
             rects_to_update = rects_to_update + rect_self_list
