@@ -32,14 +32,8 @@ class Network:
         print("Sending data")
         self.client.send(pickle.dumps(data))
         print("Gonna receive data")
-        data = []
-        while True:
-            packet = self.client.recv(4096)
-            if not packet: break
-            data.append(packet)
-        return pickle.loads(b"".join(data))
 
-        # return pickle.loads(self.client.recv(4096))
+        return pickle.loads(self.client.recv(8192))
         """
         except:
             print("Error!")
